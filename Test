@@ -1,0 +1,7 @@
+#!/bin/bash
+cd $(dirname $0)/
+prove --version >/dev/null || {
+    echo 1>&2 "Cannot find 'prove' command. Install perl TAP framework?"
+    exit 1
+}
+exec prove --exec /bin/bash "$@"
