@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -e
+
+err() { echo 2>&1 "$@"; exit 1; }
+
+meaning_of_life() { echo 42; }
+
+case $(basename "$0") in
+    bats-exec-test)     : ;;                        # Unit test mode hack
+    ckssh)              err "Write me!";;
+    *)                  err "Unknown command";;
+esac
