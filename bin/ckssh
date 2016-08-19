@@ -5,6 +5,10 @@ err() { echo 2>&1 "$@"; exit 1; }
 
 meaning_of_life() { echo 42; }
 
+find_config_for() {
+    return 1
+}
+
 case $(basename "$0") in
     bats-exec-test)     : ;;                        # Unit test mode hack
     ckssh)              err "Write me!";;
