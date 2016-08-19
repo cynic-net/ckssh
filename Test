@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -e
+
+BASE=$(cd $(dirname "$0") && pwd -P)
+
+cd "$BASE"
+bats/bin/bats t/
