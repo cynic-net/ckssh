@@ -6,7 +6,22 @@ err() { echo 2>&1 "$@"; exit 1; }
 meaning_of_life() { echo 42; }
 
 find_config_for() {
-    return 1
+    local host="$1"
+    local conf_file="$HOME/.ssh/ckssh_config"
+    [ -r "$conf_file" ] || return 2
+    sed -e '/[^ \t]*#/d' -e '/^[ \t]*$/d' "$conf_file" \
+        | (while read key value; do
+                case "$key" in
+                    CK_Host)
+                        if [ "$value" = "$host" ]; then
+                            while read k v; do case "$k" in
+                                CK_Host)    return 0;;
+                                *)          echo "$k $v";;
+                            esac; done;
+                        fi;;
+                    *)  : ;;
+                esac
+           done; return 1)
 }
 
 case $(basename "$0") in
