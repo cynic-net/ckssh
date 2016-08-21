@@ -15,8 +15,9 @@ find_config_for() {
                     CK_Host)
                         if [ "$value" = "$host" ]; then
                             while read k v; do case "$k" in
-                                CK_Host)    return 0;;
-                                *)          echo "$k $v";;
+                                CK_DefineCompartment|CK_Host)
+                                    return 0;;
+                                *)  echo "$k $v";;
                             esac; done;
                         fi;;
                     *)  : ;;

@@ -31,7 +31,7 @@ setup() {
     run find_config_for bob
     assert_success
     assert_output <<___
-CK_Key cjs@cynic.net
+CK_Compartment cjs@cynic.net
 Host 192.168.1.1
 X11Fowarding yes
 ___

@@ -19,6 +19,67 @@ so that client a compromised client server (or malicious admin) would
 gain access only to hosts accessible via that key, and not personal
 hosts or those belonging to other clients.
 
+
+Configuration File
+------------------
+
+The configuration file is found in `$HOME/.ssh/ckssh_config`. It is
+parsed in the same way as `ssh_config`:
+
+* Initial whitespace on a line is ignored.
+* Empty lines are ignored.
+* Lines starting with `#` are comments, and ignored. A `#` preceeded
+  by anything other than whitespace is not a comment.
+* Configuration directives are of the form "<key><whitespace><value>".
+
+### Configuration Parsing Bugs
+
+The current parsing code is not completely compatible with
+ssh_config.
+
+* We do not accept a list of patterns on the `CK_Host` line, just a
+  single name that is matched exactly.
+* We take parameters only from the first matched `CK_Host` section,
+  and ignore all sections after that.
+
+### Configuration Directives
+
+The `CK_DefineCompartment` and `CK_Host` directives start separate
+sections of the configuration file; after one of these, subsequent
+configuration directives are read as part of that section up until
+the next `CK_DefineCompartment` or `CK_Host` directive.
+
+#### Compartment Configuration
+
+`CK_DefineCompartment` defines a compartment (ssh-agent process) to
+hold keys.
+
+The ssh-agent socket will be named `$XDG_RUNTIME_DIR/ckssh/socket/$name`
+where `$name` is the parameter provided to `CK_DefineCompartment`.
+`$XDG_RUNTIME_DIR` is expected to be set up as per the [FreeDesktop.org
+basedir spec][basedir]; the program currently fails if it's not set as
+it's unable to properly set up a runtime dir itself.
+
+The only parameter allowed in a `CK_DefineCompartment` section is one
+or more `CK_Keyfile` directives, each of which specifies the full path
+to an SSH private key file to be loaded in to the agent with
+`ssh-add`. Shell variables and tildes in the path are interpolated by
+the shell.
+
+[basedir]: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+
+#### Host Configuration
+
+The `CK_Host` directive is similar to ssh_config's `Host` directive,
+and starts a host configuration section.
+
+A `CK_Compartment` directive specifies the compartment to be used;
+it must be one defined by a `CK_DefineCompartment` directive.
+
+Any other configuration directives are treated as configuration
+options to be passed on to SSH.
+
+
 Copyright and License
 ---------------------
 
