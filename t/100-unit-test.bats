@@ -2,7 +2,7 @@ load 'test_helper/bats-support/load'
 load 'test_helper/bats-assert/load'
 
 setup() {
-    HOME="$BATS_TEST_DIRNAME/test_home"
+    HOME="$BATS_TEST_DIRNAME/mock_home"
     source bin/ckssh
 }
 
