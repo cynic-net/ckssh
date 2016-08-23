@@ -3,6 +3,9 @@ set -e
 
 err() { echo 2>&1 "$@"; exit 1; }
 
+[ -d "$XDG_RUNTIME_DIR" ] || err '$XDG_RUNTIME_DIR not set.'
+ckssh_socket_dir="$XDG_RUNTIME_DIR/ckssh/socket"
+
 meaning_of_life() { echo 42; }
 
 find_config_for() {
@@ -25,8 +28,21 @@ find_config_for() {
            done; return 1)
 }
 
+ckssh_add() {
+    local name="$1"
+    find_config_for "$name" | (while read key value; do
+        case "$key" in
+            CK_Compartment)
+                echo "export SSH_AUTH_SOCK=$ckssh_socket_dir/$value"
+                exit
+                ;;
+        esac
+    done; err "No config for host or compartment $name")
+}
+
 case $(basename "$0") in
     bats-exec-test)     : ;;                        # Unit test mode hack
     ckssh)              err "Write me!";;
+    ckssh-add)          ckssh_add "$@";;
     *)                  err "Unknown command";;
 esac
