@@ -8,4 +8,4 @@ cd "$BASE"
     echo >&2 'Did not find bats executable. `git submodule update --init`?'
     exit 1
 }
-bats/bin/bats t/
+bats/bin/bats "${@:-t/}"
