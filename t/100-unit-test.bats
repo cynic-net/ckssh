@@ -46,9 +46,13 @@ X11Fowarding yes
 ___
 }
 
+@test 'find_compartment_config no_such_compartment' {
+    run find_compartment_config no_such_compartment
+    assert_failure
+}
+
 @test 'find_compartment_config cjs@cynic.net' {
     run find_compartment_config 'cjs@cynic.net'
-skip "Coming soon..." # XXX
     assert_success
     assert_output <<___
 CK_Keyfile ~/.ssh/cjs@cynic.net-160819

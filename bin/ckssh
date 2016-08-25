@@ -8,15 +8,16 @@ ckssh_socket_dir="$XDG_RUNTIME_DIR/ckssh/socket"
 
 meaning_of_life() { echo 42; }
 
-find_host_config() {
-    local host="$1"
+find_config() {
+    local section=$1
+    local name=$2
     local conf_file="$HOME/.ssh/ckssh_config"
     [ -r "$conf_file" ] || return 2
     sed -e '/[^ \t]*#/d' -e '/^[ \t]*$/d' "$conf_file" \
         | (while read key value; do
                 case "$key" in
-                    CK_Host)
-                        if [ "$value" = "$host" ]; then
+                    "$section")
+                        if [ "$value" = "$name" ]; then
                             while read k v; do case "$k" in
                                 CK_DefineCompartment|CK_Host)
                                     return 0;;
@@ -27,6 +28,9 @@ find_host_config() {
                 esac
            done; return 1)
 }
+
+find_host_config()        { find_config CK_Host              "$@"; }
+find_compartment_config() { find_config CK_DefineCompartment "$@"; }
 
 ckssh_add() {
     local name="$1"
