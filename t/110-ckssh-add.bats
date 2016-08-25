@@ -17,15 +17,11 @@ teardown() { rm -rf "$BATS_TMPDIR"; }
 
 
 @test 'ckssh-add compartment by compartment name' {
-    run bin/ckssh-add cjs@cynic.net
-    assert_success
-    assert_output \
-        "export SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/ckssh/socket/cjs@cynic.net"
+    ckssh_add cjs@cynic.net
+    assert_equal "$SSH_AUTH_SOCK" "$XDG_RUNTIME_DIR/ckssh/socket/cjs@cynic.net"
 }
 
 @test 'ckssh-add compartment by hostalias' {
-    run bin/ckssh-add bob
-    assert_success
-    assert_output \
-        "export SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/ckssh/socket/cjs@cynic.net"
+    ckssh_add bob
+    assert_equal "$SSH_AUTH_SOCK" "$XDG_RUNTIME_DIR/ckssh/socket/cjs@cynic.net"
 }

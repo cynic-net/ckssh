@@ -43,7 +43,7 @@ ckssh_add() {
         done
     )
     if find_compartment_config "${compartment:-$name}" >/dev/null; then
-        echo "export SSH_AUTH_SOCK=$ckssh_socket_dir/${compartment:-$name}"
+        export SSH_AUTH_SOCK="$ckssh_socket_dir/${compartment:-$name}"
     elif [ -n "$compartment" ]; then
         err "Host \"$name\" references" \
             "nonexistent compartment \"${compartment}\"."
@@ -55,6 +55,8 @@ ckssh_add() {
 case $(basename "$0") in
     bats-exec-test)     : ;;                        # Unit test mode hack
     ckssh)              err "Write me!";;
-    ckssh-add)          ckssh_add "$@";;
+    ckssh-add)          ckssh_add "$@"
+                        echo "export SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
+                        ;;
     *)                  err "Unknown command";;
 esac
