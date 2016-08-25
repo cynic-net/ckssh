@@ -34,9 +34,10 @@ teardown() { rm -rf "$BATS_TMPDIR"; }
 
 @test 'ckssh-add host with nonexistent compartment' {
 skip "Coming soon..." # XXX
-    run bin/ckssh-add charles
+    run bin/ckssh-add david
     assert_failure
-    assert_output 'Host charles references nonexistent compartment "special".'
+    assert_output \
+        'Host "david" references nonexistent compartment "no_such_compartment".'
 }
 
 @test 'ckssh-add compartment by compartment name' {
