@@ -52,10 +52,17 @@ ckssh_add() {
     fi
 }
 
+execute_ckssh_add() {
+    mkdir -m 0700 -p $(dirname "$SSH_AUTH_SOCK")
+    [ $(ssh-add -l >/dev/null 2>&1; echo $?) -eq 2 ] \
+        && eval $(ssh-agent -a "$SSH_AUTH_SOCK") >/dev/null
+}
+
 case $(basename "$0") in
     bats-exec-test)     : ;;                        # Unit test mode hack
     ckssh)              err "Write me!";;
     ckssh-add)          ckssh_add "$@"
+                        execute_ckssh_add
                         echo "export SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
                         ;;
     *)                  err "Unknown command";;
