@@ -13,6 +13,7 @@ setup() {
 
 teardown() { rm -rf "$BATS_TMPDIR"; }
 
+
 @test 'ckssh no params' {
     run bin/ckssh
     [ $status -eq 1 ]
@@ -37,18 +38,4 @@ teardown() { rm -rf "$BATS_TMPDIR"; }
     assert_failure
     assert_output \
         'Host "david" references nonexistent compartment "no_such_compartment".'
-}
-
-@test 'ckssh-add compartment by compartment name' {
-    run bin/ckssh-add cjs@cynic.net
-    assert_success
-    assert_output \
-        "export SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/ckssh/socket/cjs@cynic.net"
-}
-
-@test 'ckssh-add compartment by hostalias' {
-    run bin/ckssh-add bob
-    assert_success
-    assert_output \
-        "export SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/ckssh/socket/cjs@cynic.net"
 }
