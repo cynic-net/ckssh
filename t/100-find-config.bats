@@ -15,6 +15,7 @@ setup() {
 
 teardown() { rm -rf "$BATS_TMPDIR"; }
 
+
 @test "unit test mode" {
     assert_equal "$?" 0
 }
