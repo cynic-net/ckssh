@@ -32,8 +32,15 @@ teardown() { rm -rf "$BATS_TMPDIR"; }
     assert_output "No config for host or compartment xyzzy"
 }
 
+@test 'ckssh-add host with nonexistent compartment' {
+skip "Coming soon..." # XXX
+    run bin/ckssh-add charles
+    assert_failure
+    assert_output 'Host charles references nonexistent compartment "special".'
+}
+
 @test 'ckssh-add compartment by compartment name' {
-    skip "Coming in the next commit...."
+skip "Coming soon..." # XXX
     run bin/ckssh-add cjs@cynic.net
     assert_success
     assert_output \

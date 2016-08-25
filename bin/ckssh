@@ -8,7 +8,7 @@ ckssh_socket_dir="$XDG_RUNTIME_DIR/ckssh/socket"
 
 meaning_of_life() { echo 42; }
 
-find_config_for() {
+find_host_config() {
     local host="$1"
     local conf_file="$HOME/.ssh/ckssh_config"
     [ -r "$conf_file" ] || return 2
@@ -30,7 +30,7 @@ find_config_for() {
 
 ckssh_add() {
     local name="$1"
-    find_config_for "$name" | (while read key value; do
+    find_host_config "$name" | (while read key value; do
         case "$key" in
             CK_Compartment)
                 echo "export SSH_AUTH_SOCK=$ckssh_socket_dir/$value"
