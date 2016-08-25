@@ -26,14 +26,13 @@ teardown() { rm -rf "$BATS_TMPDIR"; }
     assert_output '$XDG_RUNTIME_DIR not set.'
 }
 
-@test 'ckssh-add nonexistent compartment' {
+@test 'ckssh-add nonexistent host and compartment' {
     run bin/ckssh-add xyzzy
     assert_failure
-    assert_output "No config for host or compartment xyzzy"
+    assert_output 'No config for host or compartment "xyzzy".'
 }
 
 @test 'ckssh-add host with nonexistent compartment' {
-skip "Coming soon..." # XXX
     run bin/ckssh-add david
     assert_failure
     assert_output \
@@ -41,7 +40,6 @@ skip "Coming soon..." # XXX
 }
 
 @test 'ckssh-add compartment by compartment name' {
-skip "Coming soon..." # XXX
     run bin/ckssh-add cjs@cynic.net
     assert_success
     assert_output \

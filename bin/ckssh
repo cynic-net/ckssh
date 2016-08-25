@@ -34,14 +34,22 @@ find_compartment_config() { find_config CK_DefineCompartment "$@"; }
 
 ckssh_add() {
     local name="$1"
-    find_host_config "$name" | (while read key value; do
-        case "$key" in
-            CK_Compartment)
-                echo "export SSH_AUTH_SOCK=$ckssh_socket_dir/$value"
-                exit
-                ;;
-        esac
-    done; err "No config for host or compartment $name")
+    local compartment=$(
+        find_host_config "$name" | while read key value; do
+            :
+            case "$key" in
+                CK_Compartment) echo "$value";;
+            esac
+        done
+    )
+    if find_compartment_config "${compartment:-$name}" >/dev/null; then
+        echo "export SSH_AUTH_SOCK=$ckssh_socket_dir/${compartment:-$name}"
+    elif [ -n "$compartment" ]; then
+        err "Host \"$name\" references" \
+            "nonexistent compartment \"${compartment}\"."
+    else
+        err "No config for host or compartment \"$name\"."
+    fi
 }
 
 case $(basename "$0") in
