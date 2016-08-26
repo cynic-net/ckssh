@@ -64,6 +64,7 @@ execute_ckssh_add() {
     esac
 }
 
+unset SSH_AUTH_SOCK
 case $(basename "$0") in
     bats-exec-test)     : ;;                        # Unit test mode hack
     ckssh)              err "Write me!";;
