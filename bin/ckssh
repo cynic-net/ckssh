@@ -54,8 +54,14 @@ ckssh_add() {
 
 execute_ckssh_add() {
     mkdir -m 0700 -p $(dirname "$SSH_AUTH_SOCK")
-    [ $(ssh-add -l >/dev/null 2>&1; echo $?) -eq 2 ] \
-        && eval $(ssh-agent -a "$SSH_AUTH_SOCK") >/dev/null
+
+    e=$(ssh-add -l >/dev/null 2>&1; echo $?)
+    case $e in
+        0) : ;;     # Running with identities
+        1) : ;;     # No identities
+        2) eval $(ssh-agent -a "$SSH_AUTH_SOCK" || echo false) >/dev/null;;
+        *) err "Unknown error from ssh-add -l: $e";;
+    esac
 }
 
 case $(basename "$0") in
