@@ -32,6 +32,9 @@ find_config() {
 find_host_config()        { find_config CK_Host              "$@"; }
 find_compartment_config() { find_config CK_DefineCompartment "$@"; }
 
+# This is the pure side of ckssh-add which can be unit tested.
+# It should have as much of the logic as possible.
+#
 ckssh_add() {
     local name="$1"; shift
     local host_compartment=$(
@@ -52,11 +55,21 @@ ckssh_add() {
         err "No config for host or compartment \"$name\"."
     fi
 
-    for keyfile in "$@"; do
-        keyfiles+=("$keyfile")
-    done
+    if [ -n "$1" ]; then
+        given_keyfile_args=true
+        for keyfile in "$@"; do keyfiles+=("$keyfile"); done
+    else
+        given_keyfile_args=false
+        coproc find_compartment_config "$compartment"
+        while read key value; do case "$key" in
+            CK_Keyfile) keyfiles+=($(echo "$value" | sed -e "s:^~:$HOME:"));;
+        esac; done <&"${COPROC[0]}"
+    fi
 }
 
+# This is the impure side of ckssh-add, which should have minimal logic.
+# We currently test it manually, but should build functional tests for it.
+#
 execute_ckssh_add() {
     mkdir -m 0700 -p $(dirname "$SSH_AUTH_SOCK")
 
@@ -68,12 +81,17 @@ execute_ckssh_add() {
         *) err "Unknown error from ssh-add -l: $e";;
     esac
 
-    for keyfile in "${keyfiles[@]}"; do
-        ssh-add -t 8h30m "$keyfile" || exit $?
-    done
+    if $given_keyfile_args \
+       || [ $(ssh-add -l >/dev/null 2>&1; echo $?) -eq 1 ]
+    then
+        for keyfile in "${keyfiles[@]}"; do
+            ssh-add -t 8h30m "$keyfile" || exit $?
+        done
+    fi
 }
 
 unset SSH_AUTH_SOCK
+given_keyfile_args=XXX
 keyfiles=()
 case $(basename "$0") in
     bats-exec-test)     : ;;                        # Unit test mode hack

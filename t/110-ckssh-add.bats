@@ -30,3 +30,11 @@ teardown() { rm -rf "$BATS_TMPDIR"; }
     assert_equal "${keyfiles[0]}" path/to/key1
     assert_equal "${keyfiles[1]}" 'path/to/key 2'
 }
+
+@test 'ckssh-add compartment by hostalias; keys from config file' {
+    ckssh_add bob
+    assert_equal "$SSH_AUTH_SOCK" "$XDG_RUNTIME_DIR/ckssh/socket/cjs@cynic.net"
+    assert_equal "${#keyfiles[@]}" 2
+    assert_equal "${keyfiles[0]}" "/home/cjs/privkeys/cjs@cynic.net-160819"
+    assert_equal "${keyfiles[1]}" "$HOME/.ssh/cjs@cynic.net-120531"
+}
