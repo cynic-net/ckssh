@@ -33,7 +33,7 @@ find_host_config()        { find_config CK_Host              "$@"; }
 find_compartment_config() { find_config CK_DefineCompartment "$@"; }
 
 ckssh_add() {
-    local name="$1"
+    local name="$1"; shift
     local host_compartment=$(
         find_host_config "$name" | while read key value; do
             :
@@ -51,6 +51,10 @@ ckssh_add() {
     else
         err "No config for host or compartment \"$name\"."
     fi
+
+    for keyfile in "$@"; do
+        keyfiles+=("$keyfile")
+    done
 }
 
 execute_ckssh_add() {
@@ -63,9 +67,14 @@ execute_ckssh_add() {
         2) eval $(ssh-agent -a "$SSH_AUTH_SOCK" || echo false) >/dev/null;;
         *) err "Unknown error from ssh-add -l: $e";;
     esac
+
+    for keyfile in "${keyfiles[@]}"; do
+        ssh-add -t 8h30m "$keyfile" || exit $?
+    done
 }
 
 unset SSH_AUTH_SOCK
+keyfiles=()
 case $(basename "$0") in
     bats-exec-test)     : ;;                        # Unit test mode hack
     ckssh)              err "Write me!";;

@@ -16,12 +16,17 @@ setup() {
 teardown() { rm -rf "$BATS_TMPDIR"; }
 
 
-@test 'ckssh-add compartment by compartment name' {
-    ckssh_add cjs@cynic.net
+@test 'ckssh-add compartment by compartment name; 1 key from comand line' {
+    ckssh_add cjs@cynic.net path/to/key
     assert_equal "$SSH_AUTH_SOCK" "$XDG_RUNTIME_DIR/ckssh/socket/cjs@cynic.net"
+    assert_equal "${#keyfiles[@]}" 1
+    assert_equal "${keyfiles[0]}" path/to/key
 }
 
-@test 'ckssh-add compartment by hostalias' {
-    ckssh_add bob
+@test 'ckssh-add compartment by hostalias; 2 keys from command line' {
+    ckssh_add bob path/to/key1 'path/to/key 2'
     assert_equal "$SSH_AUTH_SOCK" "$XDG_RUNTIME_DIR/ckssh/socket/cjs@cynic.net"
+    assert_equal "${#keyfiles[@]}" 2
+    assert_equal "${keyfiles[0]}" path/to/key1
+    assert_equal "${keyfiles[1]}" 'path/to/key 2'
 }
