@@ -91,7 +91,7 @@ execute_ckssh_add() {
 }
 
 unset SSH_AUTH_SOCK
-given_keyfile_args=XXX
+given_keyfile_args=OVERRIDE_THIS
 keyfiles=()
 case $(basename "$0") in
     bats-exec-test)     : ;;                        # Unit test mode hack
