@@ -93,6 +93,38 @@ execute_ckssh_add() {
     fi
 }
 
+# Given a command name that produces help output in OpenSSH format,
+# return the options that do not take a parameter.
+#
+get_non_param_opts() {
+    local command="$1"; shift || err "INTERNAL ERROR"
+    $command 2>&1 | sed -n -e 's,].*,,' -e '1s,.*\[-,,p'
+}
+
+# Find the argument indicating  the host in an ssh-style command line.
+# The first argument to this function is a string of non-parameter options.
+# We assume:
+# 1. Any argument starting with a hyphen is an option.
+# 2. Any option starting with a non-parameter option is all non-parameter
+#    options. (I.e., we incorrectly assume that `-1c` has no parameter
+#    though SSH would want the cipher parameter after it.)
+#
+get_host_arg() {
+    local non_param_opts="$1"; shift || err "INTERNAL ERROR"
+    local arg
+    while [ -n "$1" ]; do case "$1" in
+        -*) case "${1:1:1}" in                  # substring($1, 1, 1)
+                [$non_param_opts])  ;;
+                *)                  shift;;
+            esac
+            shift
+            ;;
+        *)  echo "$1"
+            break
+            ;;
+    esac; done
+}
+
 unset SSH_AUTH_SOCK
 given_keyfile_args=OVERRIDE_THIS
 keyfiles=()
