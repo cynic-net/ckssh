@@ -32,8 +32,10 @@ find_config() {
 find_host_config()        { find_config CK_Host              "$@"; }
 find_compartment_config() { find_config CK_DefineCompartment "$@"; }
 
-# This is the pure side of ckssh-add which can be unit tested.
-# It should have as much of the logic as possible.
+# This is the (mostly) pure side of ckssh-add which can be unit
+# tested.  It should have as much of the logic as possible.  (The
+# error portions are impure because it's too hard in shell to return
+# an error message along with the indication.)
 #
 ckssh_add() {
     local name="$1"; shift
