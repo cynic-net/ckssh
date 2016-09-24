@@ -38,7 +38,8 @@ find_compartment_config() { find_config CK_DefineCompartment "$@"; }
 # an error message along with the indication.)
 #
 ckssh_add() {
-    local name="$1"; shift
+    local name="$1"
+    shift || err "Usage: $(basename $0) <host or compartment name>"
     local host_compartment=$(
         find_host_config "$name" | while read key value; do
             :
