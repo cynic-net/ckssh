@@ -14,12 +14,6 @@ setup() {
 teardown() { rm -rf "$BATS_TMPDIR"; }
 
 
-@test 'ckssh no params' {
-    run bin/ckssh
-    [ $status -eq 1 ]
-    assert_equal "$output" "Write me!"
-}
-
 @test 'ckssh-add XDG_RUNTIME_DIR not set' {
     unset XDG_RUNTIME_DIR
     run bin/ckssh-add bob
