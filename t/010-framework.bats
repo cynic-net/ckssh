@@ -1,6 +1,4 @@
-load 'test_helper/bats-support/load'
-load 'test_helper/bats-assert/load'
-
+load 'ckssh-test-lib'
 
 @test "pass" {
     assert true
