@@ -32,10 +32,24 @@ find_config() {
 find_host_config()        { find_config CK_Host              "$@"; }
 find_compartment_config() { find_config CK_DefineCompartment "$@"; }
 
-# This is the (mostly) pure side of ckssh-add which can be unit
-# tested.  It should have as much of the logic as possible.  (The
-# error portions are impure because it's too hard in shell to return
-# an error message along with the indication.)
+# This is the pure(-ish) side of ckssh-add, designed to be
+# unit-tested.  It should have as much of the logic as possible.
+#
+# The return value is 0 or the error code of any untested command
+# within (because we set the `-e` option for this shell script).
+#
+# The function has the following (actually impure) results:
+#
+# * We may exit the process with an error; we do this here because
+#   it's too hard in shell to return an error message along with
+#   the error indication of the numeric return value. (These parts
+#   are tested in fuctional tests.
+#
+# * The return value is 0 if no untested commands failed internally.
+#
+# * It changes the `keyfiles` global variable to be the list of files
+#   from which keys should be added by the subsequent
+#   `execute_ckssh_add` call.
 #
 ckssh_add() {
     local name="$1"
