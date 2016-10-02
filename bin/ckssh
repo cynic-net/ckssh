@@ -8,6 +8,10 @@ ckssh_socket_dir="$XDG_RUNTIME_DIR/ckssh/socket"
 
 meaning_of_life() { echo 42; }
 
+strip_userat() {
+    echo "$@" | sed -e 's/^[^@]*@//'
+}
+
 find_config() {
     local section=$1
     local name=$2
@@ -139,15 +143,85 @@ get_host_arg() {
     esac; done
 }
 
+# XXX This cannot properly echo an argument list starting with
+# `-e` or `-n`.  # So this can break ckssh if someone does,
+# e.g., 'ssh -e X ...'. (Maybe use printf instead?)
+#
+print0_arg() { echo -e -n "$1\0"; }
+
+print0_ssh_args() {
+    local non_param_opts="$1"; shift || err "INTERNAL ERROR"
+
+    # Print supplied command-line args (XXX modified inline of get_host_arg).
+    while [ -n "$1" ]; do case "$1" in
+        -*) case "${1:1:1}" in                  # substring($1, 1, 1)
+                [$non_param_opts])  print0_arg "$1";;
+                *)                  print0_arg "$1"; shift; print0_arg "$1";;
+            esac
+            shift
+            ;;
+        *)  break;;
+    esac; done
+
+    # Print ssh args for "host" from ckssh config file.
+    find_host_config "$(strip_userat "$1")" | while read key value; do
+        :
+        case "$key" in
+            CK_Compartment) : ;;
+            *)              print0_arg -o; print0_arg "$key $value";;
+        esac
+    done
+
+    # Find compartment. (We can't set the var above because the while is
+    # in a subshell due to the pipe.)
+    local compartment="$(
+    find_host_config "$(strip_userat "$1")" | while read key value; do
+        :
+        case "$key" in
+            CK_Compartment) echo "$value"; break;;
+            *)              : ;;
+        esac
+    done
+    )"
+
+    # Print ssh args for compartment from ckssh config file.
+    find_compartment_config "$compartment" | while read key value; do
+        :
+        case "$key" in
+            CK_Keyfile)     : ;;
+            *)              print0_arg -o; print0_arg "$key $value";;
+        esac
+    done
+
+    # Print host and additional args.
+    for arg in "$@"; do print0_arg "$arg"; done
+}
+
+usage() {
+    echo 1>&2 "Usage: ck$1 [ssh-options] hostname [command]"
+    exit 255
+}
+
+
 unset SSH_AUTH_SOCK
 given_keyfile_args=OVERRIDE_THIS
 keyfiles=()
 case $(basename "$0") in
-    bats-exec-test)     : ;;                        # Unit test mode hack
-    ckssh)              err "Write me!";;
-    ckssh-add)          ckssh_add "$@"
-                        execute_ckssh_add
-                        echo "export SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
-                        ;;
+    bats-exec-test)
+        : ;;                        # Unit test mode hack
+    ckssh)
+        [ -z "$1" ] && usage ssh
+        non_param_opts="$(get_non_param_opts ssh)"
+        ckssh_add "$(get_host_arg "$non_param_opts" "$@")"; execute_ckssh_add
+        print0_ssh_args "$non_param_opts" "$@" | xargs -0 ssh
+        ;;
+    ckscp)
+        [ -z "$1" ] && usage scp
+        err "XXX Not implemented yet."
+        ;;
+    ckssh-add)
+        ckssh_add "$@"; execute_ckssh_add
+        echo "export SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
+        ;;
     *)                  err "Unknown command";;
 esac

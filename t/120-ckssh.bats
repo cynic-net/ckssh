@@ -26,3 +26,11 @@ teardown() { teardown_bats_tmp; }
         -1 -x foo -A -y bar -b user@host:123 1 2)
     assert_equal "$host_arg" user@host:123
 }
+
+@test 'print0_ssh_args' {
+    non_param_opts=13579ACEGaceg
+    expected="$BATS_TEST_DIRNAME/120-print0_ssh_args.expected"
+    print0_ssh_args "$non_param_opts" \
+        -a -b "'" user@bob remotecmd -a anArg \
+        | hexdump -C | diff -u "$expected" -
+}

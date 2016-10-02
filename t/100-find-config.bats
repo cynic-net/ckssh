@@ -12,6 +12,12 @@ teardown() { teardown_bats_tmp; }
     assert_equal $(meaning_of_life) 42
 }
 
+@test 'strip_userat' {
+    assert_equal "$(strip_userat foo)"          foo
+    assert_equal "$(strip_userat foo@bar)"      bar
+    assert_equal "$(strip_userat foo@bar@bam)"  bar@bam
+}
+
 @test 'find_host_config no config file' {
     HOME="$BATS_TEST_DIRNAME/nonexistent"
     run find_host_config bob

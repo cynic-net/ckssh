@@ -6,6 +6,12 @@ teardown() { teardown_bats_tmp; }
 
 @test 'ckssh no params' {
     run bin/ckssh
-    [ $status -eq 1 ]
-    assert_equal "$output" "Write me!"
+    [ $status -eq 255 ]
+    assert_equal "$output" "Usage: ckssh [ssh-options] hostname [command]"
+}
+
+@test 'ckscp no params' {
+    run bin/ckscp
+    [ $status -eq 255 ]
+    assert_equal "$output" "Usage: ckscp [ssh-options] hostname [command]"
 }
