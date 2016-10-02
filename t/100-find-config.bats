@@ -46,5 +46,6 @@ ___
     assert_output <<___
 CK_Keyfile /home/cjs/privkeys/cjs@cynic.net-160819
 CK_Keyfile ~/.ssh/cjs@cynic.net-120531
+Compression yes
 ___
 }

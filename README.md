@@ -60,11 +60,14 @@ where `$name` is the parameter provided to `CK_DefineCompartment`.
 basedir spec][basedir]; the program currently fails if it's not set as
 it's unable to properly set up a runtime dir itself.
 
-The only parameter allowed in a `CK_DefineCompartment` section is one
-or more `CK_Keyfile` directives, each of which specifies the full path
-to an SSH private key file to be loaded in to the agent with
-`ssh-add`. Shell variables and tildes in the path are interpolated by
-the shell.
+A `CK_DefineCompartment` section may contain one or more `CK_Keyfile`
+directives, each of which specifies the full path to an SSH private
+key file to be loaded in to the agent with `ssh-add`. Shell variables
+and tildes in the path are interpolated by the shell.
+
+Any other configuration directives are treated as configuration
+options to be passed on to `ssh`. These are passed on after (and so
+will be overridden by) directives in the `CK_Host` section.
 
 [basedir]: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
 
