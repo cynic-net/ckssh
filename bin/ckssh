@@ -58,14 +58,13 @@ find_compartment_config() { find_config CK_DefineCompartment "$@"; }
 ckssh_add() {
     local name="$1"
     shift || err "Usage: $(basename $0) <host or compartment name>"
-    local host_compartment=$(
+    local host_compartment="$(
         find_host_config "$name" | while read key value; do
-            :
             case "$key" in
                 CK_Compartment) echo "$value";;
             esac
         done
-    )
+    )"
     local compartment="${host_compartment:-$name}"
     if find_compartment_config "$compartment" >/dev/null; then
         export SSH_AUTH_SOCK="$ckssh_socket_dir/$compartment"
@@ -165,7 +164,6 @@ print0_ssh_args() {
 
     # Print ssh args for "host" from ckssh config file.
     find_host_config "$(strip_userat "$1")" | while read key value; do
-        :
         case "$key" in
             CK_Compartment) : ;;
             *)              print0_arg -o; print0_arg "$key $value";;
@@ -176,7 +174,6 @@ print0_ssh_args() {
     # in a subshell due to the pipe.)
     local compartment="$(
     find_host_config "$(strip_userat "$1")" | while read key value; do
-        :
         case "$key" in
             CK_Compartment) echo "$value"; break;;
             *)              : ;;
@@ -186,7 +183,6 @@ print0_ssh_args() {
 
     # Print ssh args for compartment from ckssh config file.
     find_compartment_config "$compartment" | while read key value; do
-        :
         case "$key" in
             CK_Keyfile)     : ;;
             *)              print0_arg -o; print0_arg "$key $value";;
