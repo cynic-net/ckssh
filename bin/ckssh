@@ -148,6 +148,16 @@ get_host_arg() {
 #
 print0_arg() { echo -e -n "$1\0"; }
 
+# When key matches $1 do $2, otherwise do $3
+process_key_value() {
+    while read key value; do
+        case "$key" in
+            $1) eval "$2";;
+            *)  eval "$3";;
+        esac
+    done
+}
+
 print0_ssh_args() {
     local non_param_opts="$1"; shift || err "INTERNAL ERROR"
 
@@ -163,31 +173,19 @@ print0_ssh_args() {
     esac; done
 
     # Print ssh args for "host" from ckssh config file.
-    find_host_config "$(strip_userat "$1")" | while read key value; do
-        case "$key" in
-            CK_Compartment) : ;;
-            *)              print0_arg -o; print0_arg "$key $value";;
-        esac
-    done
+    find_host_config "$(strip_userat "$1")" | process_key_value \
+        CK_Compartment ':' 'print0_arg -o; print0_arg "$key $value"'
 
     # Find compartment. (We can't set the var above because the while is
     # in a subshell due to the pipe.)
     local compartment="$(
-    find_host_config "$(strip_userat "$1")" | while read key value; do
-        case "$key" in
-            CK_Compartment) echo "$value"; break;;
-            *)              : ;;
-        esac
-    done
+        find_host_config "$(strip_userat "$1")" | process_key_value \
+            CK_Compartment 'echo "$value"; break' ':'
     )"
 
     # Print ssh args for compartment from ckssh config file.
-    find_compartment_config "$compartment" | while read key value; do
-        case "$key" in
-            CK_Keyfile)     : ;;
-            *)              print0_arg -o; print0_arg "$key $value";;
-        esac
-    done
+    find_compartment_config "$compartment" | process_key_value \
+        CK_Keyfile ':' 'print0_arg -o; print0_arg "$key $value"'
 
     # Print host and additional args.
     for arg in "$@"; do print0_arg "$arg"; done
