@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-err() { echo 2>&1 "$@"; exit 1; }
+err() { echo 1>&2 "$@"; exit 1; }
 
 [ -d "$XDG_RUNTIME_DIR" ] || err '$XDG_RUNTIME_DIR not set.'
 ckssh_socket_dir="$XDG_RUNTIME_DIR/ckssh/socket"
