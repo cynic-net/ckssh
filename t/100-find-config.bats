@@ -35,6 +35,15 @@ X11Fowarding yes
 ___
 }
 
+@test 'find_config array assignment' {
+    local -a a
+    while read line; do a+=("$line"); done < <(find_host_config bob)
+    assert_equal "${a[0]}" "CK_CompartmentName cjs@cynic.net"
+    assert_equal "${a[1]}" "Host 192.168.1.1"
+    assert_equal "${a[2]}" "X11Fowarding yes"
+    assert_equal "${#a[@]}" 3
+}
+
 @test 'find_compartment_config no_such_compartment' {
     run find_compartment_config no_such_compartment
     assert_failure
