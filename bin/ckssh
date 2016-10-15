@@ -8,29 +8,44 @@ ckssh_socket_dir="$XDG_RUNTIME_DIR/ckssh/socket"
 
 meaning_of_life() { echo 42; }
 
-find_config() {
+# Given a top-level "match-type" directive and its value to match, print
+# out all lines of our configuration that match. The rules are basically
+# the same as `ssh_config`, with the caveat that there are two different
+# types of matching directives, one for hosts and one for compartments.
+#
+# Note that, even though you pass in the top-level match-type directive
+# to match, this still has to know internally all top-level match-type
+# directives so it can skip the other types that can never match.
+#
+print_config() {
     local section=$1
     local name=$2
     local conf_file="$HOME/.ssh/ckssh_config"
     [ -r "$conf_file" ] || return 2
+
     sed -e '/[^ \t]*#/d' -e '/^[ \t]*$/d' "$conf_file" \
-        | (while read key value; do
+        | (retval=1
+           printing=echo
+           while read key value; do
                 case "$key" in
                     "$section")
                         if [ "$value" = "$name" ]; then
-                            while read k v; do case "$k" in
-                                CK_Compartment|CK_Host)
-                                    return 0;;
-                                *)  echo "$k $v";;
-                            esac; done;
-                        fi;;
-                    *)  : ;;
+                            retval=0
+                            printing=echo
+                        else
+                           printing=':'
+                        fi
+                        ;;
+                    CK_Compartment|CK_Host)
+                        printing=':';;
+                    *)
+                        $printing "$key $value";;
                 esac
-           done; return 1)
+           done; return $retval)
 }
 
-find_host_config()        { find_config CK_Host        "$@"; }
-find_compartment_config() { find_config CK_Compartment "$@"; }
+find_host_config()        { print_config CK_Host        "$@"; }
+find_compartment_config() { print_config CK_Compartment "$@"; }
 
 # This is the pure(-ish) side of ckssh-add, designed to be
 # unit-tested.  It should have as much of the logic as possible.

@@ -22,26 +22,38 @@ teardown() { teardown_bats_tmp; }
 @test 'find_host_config unknown host' {
     run find_host_config nobody_I_know
     assert_failure 1
-    assert_output ''
+    assert_output 'Protocol 2'  # Not that we care...
 }
 
 @test 'find_host_config bob' {
     run find_host_config bob
     assert_success
     assert_output <<___
+Protocol 2
 CK_CompartmentName cjs@cynic.net
 Host 192.168.1.1
 X11Fowarding yes
 ___
 }
 
+@test 'find_host_config multiple' {
+    run find_host_config charles
+    assert_success
+    assert_output <<___
+Protocol 2
+CK_CompartmentName special
+CK_CompartmentName ignored
+___
+}
+
 @test 'find_config array assignment' {
     local -a a
     while read line; do a+=("$line"); done < <(find_host_config bob)
-    assert_equal "${a[0]}" "CK_CompartmentName cjs@cynic.net"
-    assert_equal "${a[1]}" "Host 192.168.1.1"
-    assert_equal "${a[2]}" "X11Fowarding yes"
-    assert_equal "${#a[@]}" 3
+    assert_equal "${a[0]}" "Protocol 2"
+    assert_equal "${a[1]}" "CK_CompartmentName cjs@cynic.net"
+    assert_equal "${a[2]}" "Host 192.168.1.1"
+    assert_equal "${a[3]}" "X11Fowarding yes"
+    assert_equal "${#a[@]}" 4
 }
 
 @test 'find_compartment_config no_such_compartment' {
@@ -53,6 +65,7 @@ ___
     run find_compartment_config 'cjs@cynic.net'
     assert_success
     assert_output <<___
+Protocol 2
 CK_Keyfile /home/cjs/privkeys/cjs@cynic.net-160819
 CK_Keyfile ~/.ssh/cjs@cynic.net-120531
 Compression yes
