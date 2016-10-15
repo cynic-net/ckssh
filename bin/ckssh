@@ -54,14 +54,13 @@ find_compartment_config() { find_config CK_DefineCompartment "$@"; }
 ckssh_add() {
     local name="$1"
     shift || err "Usage: $(basename $0) <host or compartment name>"
-    local host_compartment=$(
+    local host_compartment="$(
         find_host_config "$name" | while read key value; do
-            :
             case "$key" in
                 CK_Compartment) echo "$value";;
             esac
         done
-    )
+    )"
     local compartment="${host_compartment:-$name}"
     if find_compartment_config "$compartment" >/dev/null; then
         export SSH_AUTH_SOCK="$ckssh_socket_dir/$compartment"
@@ -79,7 +78,7 @@ ckssh_add() {
         given_keyfile_args=false
         coproc find_compartment_config "$compartment"
         while read key value; do case "$key" in
-            CK_Keyfile) keyfiles+=($(echo "$value" | sed -e "s:^~:$HOME:"));;
+            CK_Keyfile) keyfiles+=("$(echo "$value" | sed -e "s:^~:$HOME:")");;
         esac; done <&"${COPROC[0]}"
     fi
 }
@@ -88,18 +87,18 @@ ckssh_add() {
 # We currently test it manually, but should build functional tests for it.
 #
 execute_ckssh_add() {
-    mkdir -m 0700 -p $(dirname "$SSH_AUTH_SOCK")
+    mkdir -m 0700 -p "$(dirname "$SSH_AUTH_SOCK")"
 
-    e=$(ssh-add -l >/dev/null 2>&1; echo $?)
+    e="$(ssh-add -l >/dev/null 2>&1; echo $?)"
     case $e in
         0) : ;;     # Running with identities
         1) : ;;     # No identities
-        2) eval $(ssh-agent -a "$SSH_AUTH_SOCK" || echo false) >/dev/null;;
+        2) eval "$(ssh-agent -a "$SSH_AUTH_SOCK" || echo false)" >/dev/null;;
         *) err "Unknown error from ssh-add -l: $e";;
     esac
 
     if $given_keyfile_args \
-       || [ $(ssh-add -l >/dev/null 2>&1; echo $?) -eq 1 ]
+       || [ "$(ssh-add -l >/dev/null 2>&1; echo $?)" -eq 1 ]
     then
         for keyfile in "${keyfiles[@]}"; do
             ssh-add -t 8h30m "$keyfile" || exit $?
@@ -142,7 +141,7 @@ get_host_arg() {
 unset SSH_AUTH_SOCK
 given_keyfile_args=OVERRIDE_THIS
 keyfiles=()
-case $(basename "$0") in
+case "$(basename "$0")" in
     bats-exec-test)     : ;;                        # Unit test mode hack
     ckssh)              err "Write me!";;
     ckssh-add)          ckssh_add "$@"
