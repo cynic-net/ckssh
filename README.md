@@ -44,23 +44,23 @@ ssh_config.
 
 ### Configuration Directives
 
-The `CK_DefineCompartment` and `CK_Host` directives start separate
+The `CK_Compartment` and `CK_Host` directives start separate
 sections of the configuration file; after one of these, subsequent
 configuration directives are read as part of that section up until
-the next `CK_DefineCompartment` or `CK_Host` directive.
+the next `CK_Compartment` or `CK_Host` directive.
 
 #### Compartment Configuration
 
-`CK_DefineCompartment` defines a compartment (ssh-agent process) to
+`CK_Compartment` defines a compartment (ssh-agent process) to
 hold keys.
 
 The ssh-agent socket will be named `$XDG_RUNTIME_DIR/ckssh/socket/$name`
-where `$name` is the parameter provided to `CK_DefineCompartment`.
+where `$name` is the parameter provided to `CK_Compartment`.
 `$XDG_RUNTIME_DIR` is expected to be set up as per the [FreeDesktop.org
 basedir spec][basedir]; the program currently fails if it's not set as
 it's unable to properly set up a runtime dir itself.
 
-A `CK_DefineCompartment` section may contain one or more `CK_Keyfile`
+A `CK_Compartment` section may contain one or more `CK_Keyfile`
 directives, each of which specifies the full path to an SSH private
 key file to be loaded in to the agent with `ssh-add`. Shell variables
 and tildes in the path are interpolated by the shell.
@@ -76,8 +76,8 @@ will be overridden by) directives in the `CK_Host` section.
 The `CK_Host` directive is similar to ssh_config's `Host` directive,
 and starts a host configuration section.
 
-A `CK_Compartment` directive specifies the compartment to be used;
-it must be one defined by a `CK_DefineCompartment` directive.
+A `CK_CompartmentName` directive specifies the compartment to be used;
+it must be one defined by a `CK_Compartment` directive.
 
 Any other configuration directives are treated as configuration
 options to be passed on to SSH.

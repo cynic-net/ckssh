@@ -29,7 +29,7 @@ teardown() { teardown_bats_tmp; }
     run find_host_config bob
     assert_success
     assert_output <<___
-CK_Compartment cjs@cynic.net
+CK_CompartmentName cjs@cynic.net
 Host 192.168.1.1
 X11Fowarding yes
 ___
