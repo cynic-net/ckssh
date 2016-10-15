@@ -44,8 +44,8 @@ print_config() {
            done; return $retval)
 }
 
-find_host_config()        { print_config CK_Host        "$@"; }
-find_compartment_config() { print_config CK_Compartment "$@"; }
+print_host_config()        { print_config CK_Host        "$@"; }
+print_compartment_config() { print_config CK_Compartment "$@"; }
 
 # This is the pure(-ish) side of ckssh-add, designed to be
 # unit-tested.  It should have as much of the logic as possible.
@@ -70,14 +70,14 @@ ckssh_add() {
     local name="$1"
     shift || err "Usage: $(basename $0) <host or compartment name>"
     local host_compartment="$(
-        find_host_config "$name" | while read key value; do
+        print_host_config "$name" | while read key value; do
             case "$key" in
                 CK_CompartmentName) echo "$value";;
             esac
         done
     )"
     local compartment="${host_compartment:-$name}"
-    if find_compartment_config "$compartment" >/dev/null; then
+    if print_compartment_config "$compartment" >/dev/null; then
         export SSH_AUTH_SOCK="$ckssh_socket_dir/$compartment"
     elif [ -n "$host_compartment" ]; then
         err "Host \"$name\" references" \
@@ -91,7 +91,7 @@ ckssh_add() {
         for keyfile in "$@"; do keyfiles+=("$keyfile"); done
     else
         given_keyfile_args=false
-        coproc find_compartment_config "$compartment"
+        coproc print_compartment_config "$compartment"
         while read key value; do case "$key" in
             CK_Keyfile) keyfiles+=("$(echo "$value" | sed -e "s:^~:$HOME:")");;
         esac; done <&"${COPROC[0]}"

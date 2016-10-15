@@ -12,21 +12,21 @@ teardown() { teardown_bats_tmp; }
     assert_equal $(meaning_of_life) 42
 }
 
-@test 'find_host_config no config file' {
+@test 'print_host_config no config file' {
     HOME="$BATS_TEST_DIRNAME/nonexistent"
-    run find_host_config bob
+    run print_host_config bob
     assert_failure 2
     assert_output ''
 }
 
-@test 'find_host_config unknown host' {
-    run find_host_config nobody_I_know
+@test 'print_host_config unknown host' {
+    run print_host_config nobody_I_know
     assert_failure 1
     assert_output 'Protocol 2'  # Not that we care...
 }
 
-@test 'find_host_config bob' {
-    run find_host_config bob
+@test 'print_host_config bob' {
+    run print_host_config bob
     assert_success
     assert_output <<___
 Protocol 2
@@ -36,8 +36,8 @@ X11Fowarding yes
 ___
 }
 
-@test 'find_host_config multiple' {
-    run find_host_config charles
+@test 'print_host_config multiple' {
+    run print_host_config charles
     assert_success
     assert_output <<___
 Protocol 2
@@ -46,9 +46,9 @@ CK_CompartmentName ignored
 ___
 }
 
-@test 'find_config array assignment' {
+@test 'print_config array assignment' {
     local -a a
-    while read line; do a+=("$line"); done < <(find_host_config bob)
+    while read line; do a+=("$line"); done < <(print_host_config bob)
     assert_equal "${a[0]}" "Protocol 2"
     assert_equal "${a[1]}" "CK_CompartmentName cjs@cynic.net"
     assert_equal "${a[2]}" "Host 192.168.1.1"
@@ -56,13 +56,13 @@ ___
     assert_equal "${#a[@]}" 4
 }
 
-@test 'find_compartment_config no_such_compartment' {
-    run find_compartment_config no_such_compartment
+@test 'print_compartment_config no_such_compartment' {
+    run print_compartment_config no_such_compartment
     assert_failure
 }
 
-@test 'find_compartment_config cjs@cynic.net' {
-    run find_compartment_config 'cjs@cynic.net'
+@test 'print_compartment_config cjs@cynic.net' {
+    run print_compartment_config 'cjs@cynic.net'
     assert_success
     assert_output <<___
 Protocol 2
