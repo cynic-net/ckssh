@@ -12,7 +12,10 @@ teardown() { teardown_bats_tmp; }
 @test 'print_host_config unknown host' {
     run print_host_config nobody_I_know
     assert_failure 1
-    assert_output 'Protocol 2'  # Not that we care...
+
+    # Not that we care...
+    assert_output 'Protocol 2
+CK_SSHCommand ~/bin/mock-ssh'
 }
 
 @test 'print_host_config bob' {
@@ -20,6 +23,7 @@ teardown() { teardown_bats_tmp; }
     assert_success
     assert_output <<___
 Protocol 2
+CK_SSHCommand ~/bin/mock-ssh
 CK_CompartmentName cjs@cynic.net
 Host 192.168.1.1
 X11Fowarding yes
@@ -31,6 +35,7 @@ ___
     assert_success
     assert_output <<___
 Protocol 2
+CK_SSHCommand ~/bin/mock-ssh
 N1 value1
 CK_CompartmentName special
 N2 value2
@@ -68,10 +73,12 @@ ___
     assert_success
     assert_equal "${a[2]}" 'pre-existing data'
     assert_equal "${a[3]}" 'Protocol 2'
-    assert_equal "${a[4]}" 'N1 value1'
-    assert_equal "${a[5]}" 'N2 value2'
-    assert_equal "${a[6]}" 'N3 value3'
-    assert_equal "${a[7]}" 'Protocol 2' # Harmless repeat from compartment scan
-    assert_equal "${a[8]}" 'CK_Keyfile /special/special.priv'
-    assert_equal "${#a[@]}" 7
+    assert_equal "${a[4]}" 'CK_SSHCommand ~/bin/mock-ssh'
+    assert_equal "${a[5]}" 'N1 value1'
+    assert_equal "${a[6]}" 'N2 value2'
+    assert_equal "${a[7]}" 'N3 value3'
+    assert_equal "${a[8]}" 'Protocol 2' # Harmless repeat from compartment scan
+    assert_equal "${a[9]}" 'CK_SSHCommand ~/bin/mock-ssh'
+    assert_equal "${a[10]}" 'CK_Keyfile /special/special.priv'
+    assert_equal "${#a[@]}" 9
 }

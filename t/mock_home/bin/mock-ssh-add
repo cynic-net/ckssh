@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# When first option is `-l` we assume we're being called as
+# `ssh-add` and being asked to list the currently loaded keys.
+# Claim we have no identities loaded.
+[ _"$1" = _-l ] && { exit 1; }
+
+echo "env SSH_AUTH_SOCK: $SSH_AUTH_SOCK"
+for arg in "$@"; do echo "arg: $arg"; done

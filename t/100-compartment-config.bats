@@ -26,6 +26,7 @@ teardown() { teardown_bats_tmp; }
     assert_success
     assert_output <<___
 Protocol 2
+CK_SSHCommand ~/bin/mock-ssh
 CK_Keyfile /home/cjs/privkeys/cjs@cynic.net-160819
 CK_Keyfile ~/.ssh/cjs@cynic.net-120531
 Compression yes
@@ -52,8 +53,9 @@ ___
     load_compartment_config a 'cjs@cynic.net'
     assert_success
     assert_equal "${a[0]}" 'Protocol 2'
-    assert_equal "${a[1]}" 'CK_Keyfile /home/cjs/privkeys/cjs@cynic.net-160819'
-    assert_equal "${a[2]}" 'CK_Keyfile ~/.ssh/cjs@cynic.net-120531'
-    assert_equal "${a[3]}" 'Compression yes'
-    assert_equal "${#a[@]}" 4
+    assert_equal "${a[1]}" 'CK_SSHCommand ~/bin/mock-ssh'
+    assert_equal "${a[2]}" 'CK_Keyfile /home/cjs/privkeys/cjs@cynic.net-160819'
+    assert_equal "${a[3]}" 'CK_Keyfile ~/.ssh/cjs@cynic.net-120531'
+    assert_equal "${a[4]}" 'Compression yes'
+    assert_equal "${#a[@]}" 5
 }

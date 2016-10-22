@@ -49,6 +49,11 @@ sections of the configuration file; after one of these, subsequent
 configuration directives are read as part of that section up until
 the next `CK_Compartment` or `CK_Host` directive.
 
+The only other configuration directive is `CK_SSHCommand` which allows
+you to specify a command other than `ssh` to be run by ckssh. The
+value will have an initial `~/` expanded to `$HOME`; no other
+expansion is currently done.
+
 #### Compartment Configuration
 
 `CK_Compartment` defines a compartment (ssh-agent process) to

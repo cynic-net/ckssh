@@ -101,29 +101,13 @@ load_host_config() {
     load_compartment_config "$1" "$compartment"
 }
 
-# This is the pure(-ish) side of ckssh-add, designed to be
-# unit-tested.  It should have as much of the logic as possible.
-#
-# The return value is 0 or the error code of any untested command
-# within (because we set the `-e` option for this shell script).
-#
-# The function has the following (actually impure) results:
-#
-# * We may exit the process with an error; we do this here because
-#   it's too hard in shell to return an error message along with
-#   the error indication of the numeric return value. (These parts
-#   are tested in fuctional tests.
-#
-# * The return value is 0 if no untested commands failed internally.
-#
-# * It changes the `keyfiles` global variable to be the list of files
-#   from which keys should be added by the subsequent
-#   `execute_ckssh_add` call.
-#
+expand_tilde() { echo "$*" | sed -e "s:^~/:$HOME/:"; }
+
 ckssh_add() {
     local compartment="$1"
     shift || err "Usage: $(basename $0) <compartment-name>"
 
+    #### Read config
     local -a config
     local retval=0
     load_compartment_config config "$compartment" || retval=$?
@@ -134,8 +118,18 @@ ckssh_add() {
          *) err "INTERNAL ERROR $retval at $BASH_LINENO";;
     esac
 
-    export SSH_AUTH_SOCK="$ckssh_socket_dir/$compartment"
+    #### Parse CK_SSHCommand
+    local ssh_command
+    for i in "${!config[@]}"; do
+        local name value
+        read name value < <(echo "${config[$i]}")
+        case "$name" in CK_SSHCommand)
+            [ -z "$ssh_command" ] && ssh_command="$(expand_tilde "$value")";;
+        esac
+    done
 
+    #### Parse command line args
+    local keyfiles given_keyfile_args
     if [ -n "$1" ]; then
         given_keyfile_args=true
         for keyfile in "$@"; do keyfiles+=("$keyfile"); done
@@ -145,31 +139,31 @@ ckssh_add() {
             local name value
             read name value < <(echo "${config[$i]}")
             case "$name" in CK_Keyfile)
-                keyfiles+=("$(echo "$value" | sed -e "s:^~:$HOME:")");;
+                keyfiles+=("$(expand_tilde "$value")");;
             esac
         done
     fi
-}
 
-# This is the impure side of ckssh-add, which should have minimal logic.
-# We currently test it manually, but should build functional tests for it.
-#
-execute_ckssh_add() {
+    #### Setup environment
+    ssh_add="${ssh_command:-ssh}-add"
     mkdir -m 0700 -p "$(dirname "$SSH_AUTH_SOCK")"
+    export SSH_AUTH_SOCK="$ckssh_socket_dir/$compartment"
 
-    e="$(ssh-add -l >/dev/null 2>&1; echo $?)"
+    #### Start agent if not already running
+    e="$("$ssh_add" -l >/dev/null 2>&1; echo $?)"
     case $e in
         0) : ;;     # Running with identities
         1) : ;;     # No identities
         2) eval "$(ssh-agent -a "$SSH_AUTH_SOCK" || echo false)" >/dev/null;;
-        *) err "Unknown error from ssh-add -l: $e";;
+        *) err "Unknown error from $ssh_add -l: $e";;
     esac
 
+    #### Add keys if none loaded or given on command line
     if $given_keyfile_args \
-       || [ "$(ssh-add -l >/dev/null 2>&1; echo $?)" -eq 1 ]
+       || [ "$("$ssh_add" -l >/dev/null 2>&1; echo $?)" -eq 1 ]
     then
         for keyfile in "${keyfiles[@]}"; do
-            ssh-add -t 8h30m "$keyfile" || exit $?
+            "$ssh_add" -t 8h30m "$keyfile" || exit $?
         done
     fi
 }
@@ -207,13 +201,10 @@ get_host_arg() {
 }
 
 unset SSH_AUTH_SOCK
-given_keyfile_args=OVERRIDE_THIS
-keyfiles=()
 case "$(basename "$0")" in
     bats-exec-test)     : ;;                        # Unit test mode hack
     ckssh)              err "Write me!";;
     ckssh-add)          ckssh_add "$@"
-                        execute_ckssh_add
                         echo "export SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
                         ;;
     *)                  err "Unknown command";;
