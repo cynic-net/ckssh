@@ -8,10 +8,6 @@ teardown() { teardown_bats_tmp; }
     assert_equal "$?" 0
 }
 
-@test 'meaning_of_life' {
-    assert_equal $(meaning_of_life) 42
-}
-
 @test 'print_host_config no config file' {
     HOME="$BATS_TEST_DIRNAME/nonexistent"
     run print_host_config bob

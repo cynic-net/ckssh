@@ -6,8 +6,6 @@ err() { echo 1>&2 "$@"; exit 1; }
 [ -d "$XDG_RUNTIME_DIR" ] || err '$XDG_RUNTIME_DIR not set.'
 ckssh_socket_dir="$XDG_RUNTIME_DIR/ckssh/socket"
 
-meaning_of_life() { echo 42; }
-
 # Given a top-level "match-type" directive and its value to match, print
 # out all lines of our configuration that match. The rules are basically
 # the same as `ssh_config`, with the caveat that there are two different
