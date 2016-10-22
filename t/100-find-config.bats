@@ -86,7 +86,47 @@ ___
     assert_success
     assert_output <<___
 Protocol 2
+N1 value1
 CK_CompartmentName special
+N2 value2
 CK_CompartmentName ignored
+N3 value3
 ___
+}
+
+@test 'load_host_config no config file' {
+    HOME="$BATS_TEST_DIRNAME/nonexistent"
+    local -a a
+    set +e; load_host_config bob; retval=$?; set -e
+    assert_equal "${#a[@]}" 0
+    assert_equal $retval 2
+}
+
+@test 'load_host_config no_such_host' {
+    local -a a
+    set +e; load_host_config no_such_host; retval=$?; set -e
+    assert_equal "${#a[@]}" 0
+    assert_equal $retval 1
+}
+
+@test 'load_host_config no_such_compartment' {
+    local -a a
+    set +e; load_host_config a david; retval=$?; set -e
+    assert_equal $retval 3
+}
+
+@test 'load_host_config mulitple host section match' {
+    local -a a
+    a[2]='pre-existing data'    # Ensure array we pass in is left intact
+
+    load_host_config a charles
+    assert_success
+    assert_equal "${a[2]}" 'pre-existing data'
+    assert_equal "${a[3]}" 'Protocol 2'
+    assert_equal "${a[4]}" 'N1 value1'
+    assert_equal "${a[5]}" 'N2 value2'
+    assert_equal "${a[6]}" 'N3 value3'
+    assert_equal "${a[7]}" 'Protocol 2' # Harmless repeat from compartment scan
+    assert_equal "${a[8]}" 'CK_Keyfile /special/special.priv'
+    assert_equal "${#a[@]}" 7
 }

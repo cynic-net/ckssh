@@ -15,6 +15,8 @@ ckssh_socket_dir="$XDG_RUNTIME_DIR/ckssh/socket"
 # to match, this still has to know internally all top-level match-type
 # directives so it can skip the other types that can never match.
 #
+# Returns 1 on search item not found and 2 on config file not found
+#
 print_config() {
     local section=$1
     local name=$2
@@ -75,9 +77,28 @@ load_compartment_config() {
     done < <(print_compartment_config "$compartment")
 }
 load_host_config() {
-    local config_array_name
-    local host
-    return 1
+    local -n config_array="$1"
+    local host="$2"
+    local -a host_conf
+
+    print_host_config "$host" >/dev/null || return $?
+    while read line; do
+        host_conf+=("$line")
+    done < <(print_host_config "$host")
+
+    local compartment=''
+    for i in "${!host_conf[@]}"; do
+        local name value
+        read name value < <(echo "${host_conf[$i]}")
+        case "$name" in CK_CompartmentName)
+            [ -z "$compartment" ] && compartment="$value"
+            unset host_conf[$i]
+        esac
+    done
+    config_array+=("${host_conf[@]}")
+
+    print_compartment_config "$compartment" >/dev/null || return 3
+    load_compartment_config "$1" "$compartment"
 }
 
 # This is the pure(-ish) side of ckssh-add, designed to be
