@@ -45,6 +45,41 @@ print_config() {
 print_host_config()        { print_config CK_Host        "$@"; }
 print_compartment_config() { print_config CK_Compartment "$@"; }
 
+# load_*_config <config_array_name> <name>
+#
+# Search for the compartment or host matching <name> in the
+# configuration file, returning 0 if it's found. If found, the
+# configuration lines are appended to the (global) array named
+# <config_array_name>.
+#
+# `load_compartment_config` will return 1 if the compartment is not
+# defined in the configuration file. `load_host_config` will return 1
+# if a pattern matching the host is not found in the configuration
+# file, and will exit with an error message if the host specifies a
+# compartment that does not exist.
+#
+# Note that, at least for the moment, `CK_Compartment` definitions
+# must be an exact name, not a wildcard, as the wildcard use case not
+# entirely clear.
+#
+# XXX `CK_Host` configurations should match host patterns, but do not
+# do that yet.
+#
+load_compartment_config() {
+    local -n config_array="$1"
+    local compartment="$2"
+
+    print_compartment_config "$compartment" >/dev/null || return $?
+    while read line; do
+        config_array+=("$line")
+    done < <(print_compartment_config "$compartment")
+}
+load_host_config() {
+    local config_array_name
+    local host
+    return 1
+}
+
 # This is the pure(-ish) side of ckssh-add, designed to be
 # unit-tested.  It should have as much of the logic as possible.
 #

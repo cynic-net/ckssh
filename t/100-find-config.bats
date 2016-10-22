@@ -34,6 +34,33 @@ Compression yes
 ___
 }
 
+@test 'load_compartment_config no config file' {
+    HOME="$BATS_TEST_DIRNAME/nonexistent"
+    local -a a
+    set +e; load_compartment_config bob; retval=$?; set -e
+    assert_equal "${#a[@]}" 0
+    assert_equal $retval 2
+}
+
+@test 'load_compartment_config no_such_compartment' {
+    local -a a
+    set +e; load_compartment_config no_such_compartment; retval=$?; set -e
+    assert_equal "${#a[@]}" 0
+    assert_equal $retval 1
+}
+
+@test 'load_compartment_config cjs@cynic.net' {
+    local -a a
+    load_compartment_config a 'cjs@cynic.net'
+    assert_success
+    assert_equal "${a[0]}" 'Protocol 2'
+    assert_equal "${a[1]}" 'CK_Keyfile /home/cjs/privkeys/cjs@cynic.net-160819'
+    assert_equal "${a[2]}" 'CK_Keyfile ~/.ssh/cjs@cynic.net-120531'
+    assert_equal "${a[3]}" 'Compression yes'
+    assert_equal "${#a[@]}" 4
+}
+
+
 ############################################################
 # Hosts
 
@@ -63,14 +90,3 @@ CK_CompartmentName special
 CK_CompartmentName ignored
 ___
 }
-
-@test 'print_config array assignment' {
-    local -a a
-    while read line; do a+=("$line"); done < <(print_host_config bob)
-    assert_equal "${a[0]}" "Protocol 2"
-    assert_equal "${a[1]}" "CK_CompartmentName cjs@cynic.net"
-    assert_equal "${a[2]}" "Host 192.168.1.1"
-    assert_equal "${a[3]}" "X11Fowarding yes"
-    assert_equal "${#a[@]}" 4
-}
-
