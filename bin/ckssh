@@ -15,13 +15,13 @@ ckssh_socket_dir="$XDG_RUNTIME_DIR/ckssh/socket"
 # to match, this still has to know internally all top-level match-type
 # directives so it can skip the other types that can never match.
 #
-# Returns 1 on search item not found and 2 on config file not found
+# Returns 1 on search item not found and 10 on config file not found
 #
 print_config() {
     local section=$1
     local name=$2
     local conf_file="$HOME/.ssh/ckssh_config"
-    [ -r "$conf_file" ] || return 2
+    [ -r "$conf_file" ] || return 10
 
     sed -e '/[^ \t]*#/d' -e '/^[ \t]*$/d' "$conf_file" \
         | (retval=1
@@ -97,7 +97,7 @@ load_host_config() {
     done
     config_array+=("${host_conf[@]}")
 
-    print_compartment_config "$compartment" >/dev/null || return 3
+    print_compartment_config "$compartment" >/dev/null || return 2
     load_compartment_config "$1" "$compartment"
 }
 

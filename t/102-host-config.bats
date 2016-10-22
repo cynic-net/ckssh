@@ -44,7 +44,7 @@ ___
     local -a a
     set +e; load_host_config bob; retval=$?; set -e
     assert_equal "${#a[@]}" 0
-    assert_equal $retval 2
+    assert_equal $retval 10
 }
 
 @test 'load_host_config no_such_host' {
@@ -57,7 +57,7 @@ ___
 @test 'load_host_config no_such_compartment' {
     local -a a
     set +e; load_host_config a david; retval=$?; set -e
-    assert_equal $retval 3
+    assert_equal $retval 2
 }
 
 @test 'load_host_config mulitple host section match' {

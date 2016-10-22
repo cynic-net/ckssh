@@ -12,7 +12,7 @@ teardown() { teardown_bats_tmp; }
 @test 'print_compartment_config no config file' {
     HOME="$BATS_TEST_DIRNAME/nonexistent"
     run print_compartment_config bob
-    assert_failure 2
+    assert_failure 10
     assert_output ''
 }
 
@@ -37,7 +37,7 @@ ___
     local -a a
     set +e; load_compartment_config bob; retval=$?; set -e
     assert_equal "${#a[@]}" 0
-    assert_equal $retval 2
+    assert_equal $retval 10
 }
 
 @test 'load_compartment_config no_such_compartment' {
