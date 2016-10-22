@@ -141,10 +141,13 @@ ckssh_add() {
         for keyfile in "$@"; do keyfiles+=("$keyfile"); done
     else
         given_keyfile_args=false
-        coproc print_compartment_config "$compartment"
-        while read key value; do case "$key" in
-            CK_Keyfile) keyfiles+=("$(echo "$value" | sed -e "s:^~:$HOME:")");;
-        esac; done <&"${COPROC[0]}"
+        for i in "${!config[@]}"; do
+            local name value
+            read name value < <(echo "${config[$i]}")
+            case "$name" in CK_Keyfile)
+                keyfiles+=("$(echo "$value" | sed -e "s:^~:$HOME:")");;
+            esac
+        done
     fi
 }
 
