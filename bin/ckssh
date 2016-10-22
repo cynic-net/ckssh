@@ -124,11 +124,17 @@ ckssh_add() {
     local compartment="$1"
     shift || err "Usage: $(basename $0) <compartment-name>"
 
-    if print_compartment_config "$compartment" >/dev/null; then
-        export SSH_AUTH_SOCK="$ckssh_socket_dir/$compartment"
-    else
-        err "No config for compartment \"$compartment\"."
-    fi
+    local -a config
+    local retval=0
+    load_compartment_config config "$compartment" || retval=$?
+    case $retval in
+         0) : ;;
+         1) err "No config for compartment \"$compartment\".";;
+        10) err "Config file not found";;
+         *) err "INTERNAL ERROR $retval at $BASH_LINENO";;
+    esac
+
+    export SSH_AUTH_SOCK="$ckssh_socket_dir/$compartment"
 
     if [ -n "$1" ]; then
         given_keyfile_args=true
