@@ -11,21 +11,14 @@ teardown() { teardown_bats_tmp; }
     assert_output '$XDG_RUNTIME_DIR not set.'
 }
 
-@test 'ckssh-add no host or compartment specified' {
+@test 'ckssh-add no compartment specified' {
     run bin/ckssh-add
     assert_failure
-    assert_output 'Usage: ckssh-add <host or compartment name>'
+    assert_output 'Usage: ckssh-add <compartment-name>'
 }
 
-@test 'ckssh-add nonexistent host and compartment' {
-    run bin/ckssh-add xyzzy
+@test 'ckssh-add nonexistent compartment' {
+    run bin/ckssh-add alice     # yes, this is a hostname
     assert_failure
-    assert_output 'No config for host or compartment "xyzzy".'
-}
-
-@test 'ckssh-add host with nonexistent compartment' {
-    run bin/ckssh-add david
-    assert_failure
-    assert_output \
-        'Host "david" references nonexistent compartment "no_such_compartment".'
+    assert_output 'No config for compartment "alice".'
 }
