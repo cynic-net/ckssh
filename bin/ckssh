@@ -140,6 +140,13 @@ ensure_agent() {
     esac
 }
 
+load_keys() {
+    local -n keys="$1"
+    for keyfile in "${keys[@]}"; do
+        "$ssh_add" -t 8h30m "$keyfile" || exit $?
+    done
+}
+
 ckssh_add() {
     local compartment="$1"
     shift || err "Usage: $(basename $0) <compartment-name>"
@@ -181,9 +188,7 @@ ckssh_add() {
     if $given_keyfile_args \
        || [ "$("$ssh_add" -l >/dev/null 2>&1; echo $?)" -eq 1 ]
     then
-        for keyfile in "${keyfiles[@]}"; do
-            "$ssh_add" -t 8h30m "$keyfile" || exit $?
-        done
+        load_keys keyfiles
     fi
 }
 
