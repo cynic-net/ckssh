@@ -5,7 +5,13 @@ err() { echo 1>&2 "$@"; exit 1; }
 err255() { echo 1>&2 "$@"; exit 255; }
 
 [ -d "$XDG_RUNTIME_DIR" ] || err '$XDG_RUNTIME_DIR not set.'
-ckssh_socket_dir="$XDG_RUNTIME_DIR/ckssh/socket"
+ckssh_runtime_dir="$XDG_RUNTIME_DIR/ckssh"
+ckssh_tmp_dir="$ckssh_runtime_dir/tmp"
+mkdir -m 0700 -p "$ckssh_tmp_dir"
+trap "rm -f $ckssh_tmp_dir/$$.*" EXIT
+
+ckssh_socket_dir="$ckssh_runtime_dir/socket"
+
 
 # Given a top-level "match-type" directive and its value to match, print
 # out all lines of our configuration that match. The rules are basically
@@ -205,6 +211,8 @@ strip_userat() {
     echo "$@" | sed -e 's/^[^@]*@//'
 }
 
+print0_arg() { echo -e -n "$1\0"; }
+
 # For compatibility with ssh, we must always exit with 255 on any
 # error before the remote command runs, otherwise we exit with the
 # remote command's status code.
@@ -238,7 +246,29 @@ ckssh() {
         esac
     done
 
-    exec $ssh_command "${config[@]}"
+    ##### Build command line
+    local arg_file=$ckssh_tmp_dir/$$.args
+    > $arg_file
+    # Options given to ckssh
+    while [ -n "$1" ]; do case "$1" in
+        -*) case "${1:1:1}" in                  # substring($1, 1, 1)
+                [$non_param_opts])  print0_arg "$1" ;;
+                *)                  print0_arg "$1"; shift; print0_arg "$1";;
+            esac
+            shift
+            ;;
+        *)  break;;
+    esac; done >> $arg_file
+    # Options from ckssh configuration file
+    for arg in "${config[@]}"; do
+        print0_arg -o
+        print0_arg "$arg"
+    done >> $arg_file
+
+    # Remainder of ckssh command line options
+    for arg in "$@"; do print0_arg "$arg" >> $arg_file; done
+
+    exec xargs -0 -a $arg_file $ssh_command
 }
 
 unset SSH_AUTH_SOCK
