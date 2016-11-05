@@ -25,9 +25,8 @@ teardown() { teardown_bats_tmp; }
 @test 'ckssh ssh charles' {
     run bin/ckssh -o 'M1 m2' xyz@charles do 'more stuff' < <(echo 'Hi charles')
     assert_success
-skip "Partially complete: now needs to do ckssh-add type thing "
     assert_output <<___
-env SSH_AUTH_SOCK: $XDG_RUNTIME_DIR/ckssh/socket/special.priv
+env SSH_AUTH_SOCK: 
 arg: -o
 arg: M1 m2
 arg: -o
@@ -40,6 +39,8 @@ arg: -o
 arg: N3 value3
 arg: -o
 arg: Protocol 2
+arg: -o
+arg: CK_Keyfile /special/special.priv
 arg: xyz@charles
 arg: do
 arg: more stuff
