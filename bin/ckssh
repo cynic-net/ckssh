@@ -116,7 +116,9 @@ extract_keyfiles() {
         local name value
         read name value < <(echo "${config_array[$i]}")
         case "$name" in CK_Keyfile)
-            keyfiles_array+=("$(expand_tilde "$value")");;
+            keyfiles_array+=("$(expand_tilde "$value")")
+            unset config_array[$i]
+            ;;
         esac
     done
 }
@@ -284,6 +286,12 @@ ckssh() {
             ;;
         *)  break;;
     esac; done >> $arg_file
+
+    local -a keyfiles
+    extract_keyfiles keyfiles config
+    ensure_agent "$compartment" "$ssh_command"
+    load_keys keyfiles
+
     # Options from ckssh configuration file
     for arg in "${config[@]}"; do
         print0_arg -o
