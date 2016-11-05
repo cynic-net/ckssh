@@ -86,24 +86,11 @@ load_compartment_config() {
 load_host_config() {
     local -n config_array="$1"
     local host="$2"
-    local -a host_conf
 
     print_host_config "$host" >/dev/null || return $?
     while read line; do
-        host_conf+=("$line")
+        config_array+=("$line")
     done < <(print_host_config "$host")
-
-    local compartment=''
-    for i in "${!host_conf[@]}"; do
-        local name value
-        read name value < <(echo "${host_conf[$i]}")
-        case "$name" in CK_CompartmentName)
-            [ -z "$compartment" ] && compartment="$value"
-            #unset host_conf[$i] # extract_compartment_name now removes this
-        esac
-    done
-    config_array+=("${host_conf[@]}")
-
 }
 
 extract_compartment_name() {
