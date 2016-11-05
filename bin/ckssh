@@ -99,13 +99,26 @@ load_host_config() {
         read name value < <(echo "${host_conf[$i]}")
         case "$name" in CK_CompartmentName)
             [ -z "$compartment" ] && compartment="$value"
-            unset host_conf[$i]
+            #unset host_conf[$i] # extract_compartment_name now removes this
         esac
     done
     config_array+=("${host_conf[@]}")
 
     print_compartment_config "$compartment" >/dev/null || return 2
     load_compartment_config "$1" "$compartment"
+}
+
+extract_compartment_name() {
+    local -n comp="$1"
+    local -n host_conf="$2"
+    for i in "${!host_conf[@]}"; do
+        local name value
+        read name value < <(echo "${host_conf[$i]}")
+        case "$name" in CK_CompartmentName)
+            [ -z "$comp" ] && comp="$value"
+            unset host_conf[$i]
+        esac
+    done
 }
 
 expand_tilde() { echo "$*" | sed -e "s:^~/:$HOME/:"; }
@@ -229,9 +242,16 @@ ckssh() {
     case $retval in
          0) : ;;
          1) err255 "$(basename $0): No config for host '$host'";;
-         2) err255 "$(basename $0): No config for compartment";;
+         2) : ;;
         10) err255 "$(basename $0): Config file not found";;
          *) err255 "$(basename $0): INTERNAL ERROR $retval at $BASH_LINENO";;
+    esac
+
+    local compartment
+    extract_compartment_name compartment config
+    case $retval in
+        2) err255 "$(basename $0): No config for compartment '$compartment'";;
+        *)
     esac
 
     #### Parse CK_SSHCommand

@@ -19,7 +19,7 @@ teardown() { teardown_bats_tmp; }
 @test 'ckssh host has non-existant compartment' {
     run bin/ckssh david
     assert_failure 255
-    assert_output "ckssh: No config for compartment"
+    assert_output "ckssh: No config for compartment 'no_such_compartment'"
 }
 
 @test 'ckssh ssh charles' {
