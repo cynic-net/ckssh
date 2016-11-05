@@ -2,6 +2,7 @@
 set -e
 
 err() { echo 1>&2 "$@"; exit 1; }
+err255() { echo 1>&2 "$@"; exit 255; }
 
 [ -d "$XDG_RUNTIME_DIR" ] || err '$XDG_RUNTIME_DIR not set.'
 ckssh_socket_dir="$XDG_RUNTIME_DIR/ckssh/socket"
@@ -107,7 +108,7 @@ ckssh_add() {
     local compartment="$1"
     shift || err "Usage: $(basename $0) <compartment-name>"
 
-    #### Read config
+    #### Read compartment config
     local -a config
     local retval=0
     load_compartment_config config "$compartment" || retval=$?
@@ -200,10 +201,50 @@ get_host_arg() {
     esac; done
 }
 
+strip_userat() {
+    echo "$@" | sed -e 's/^[^@]*@//'
+}
+
+# For compatibility with ssh, we must always exit with 255 on any
+# error before the remote command runs, otherwise we exit with the
+# remote command's status code.
+#
+ckssh() {
+    [ $# = 0 ] \
+        && err255 "usage: $(basename $0) [ssh-params ...] [user@]host [cmd...]"
+
+    #### Read host config
+    local host="$(strip_userat $(get_host_arg $(get_non_param_opts ssh) "$@"))"
+    local -a config
+    local retval=0
+    load_host_config config "$host" || retval=$?
+    case $retval in
+         0) : ;;
+         1) err255 "$(basename $0): No config for host '$host'";;
+         2) err255 "$(basename $0): No config for compartment";;
+        10) err255 "$(basename $0): Config file not found";;
+         *) err255 "$(basename $0): INTERNAL ERROR $retval at $BASH_LINENO";;
+    esac
+
+    #### Parse CK_SSHCommand
+    local ssh_command
+    for i in "${!config[@]}"; do
+        local name value
+        read name value < <(echo "${config[$i]}")
+        case "$name" in CK_SSHCommand)
+            [ -z "$ssh_command" ] && ssh_command="$(expand_tilde "$value")"
+            unset config[$i]
+            ;;
+        esac
+    done
+
+    exec $ssh_command "${config[@]}"
+}
+
 unset SSH_AUTH_SOCK
 case "$(basename "$0")" in
     bats-exec-test)     : ;;                        # Unit test mode hack
-    ckssh)              err "Write me!";;
+    ckssh)              ckssh "$@";;
     ckssh-add)          ckssh_add "$@"
                         echo "export SSH_AUTH_SOCK=$SSH_AUTH_SOCK"
                         ;;
