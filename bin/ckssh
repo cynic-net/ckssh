@@ -108,6 +108,19 @@ extract_compartment_name() {
 
 expand_tilde() { echo "$*" | sed -e "s:^~/:$HOME/:"; }
 
+extract_keyfiles() {
+    local -n keyfiles_array="$1"
+    local -n config_array="$2"
+
+    for i in "${!config_array[@]}"; do
+        local name value
+        read name value < <(echo "${config_array[$i]}")
+        case "$name" in CK_Keyfile)
+            keyfiles_array+=("$(expand_tilde "$value")");;
+        esac
+    done
+}
+
 ckssh_add() {
     local compartment="$1"
     shift || err "Usage: $(basename $0) <compartment-name>"
@@ -140,13 +153,7 @@ ckssh_add() {
         for keyfile in "$@"; do keyfiles+=("$keyfile"); done
     else
         given_keyfile_args=false
-        for i in "${!config[@]}"; do
-            local name value
-            read name value < <(echo "${config[$i]}")
-            case "$name" in CK_Keyfile)
-                keyfiles+=("$(expand_tilde "$value")");;
-            esac
-        done
+        extract_keyfiles keyfiles config
     fi
 
     #### Setup environment
