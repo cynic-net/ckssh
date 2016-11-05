@@ -7,3 +7,7 @@
 
 echo "env SSH_AUTH_SOCK: $SSH_AUTH_SOCK"
 for arg in "$@"; do echo "arg: $arg"; done
+case "$0" in
+    *-add)  : ;; # ssh-add doesn't read stdin and this makes testing easier
+    *)      echo stdin:; cat;;
+esac
