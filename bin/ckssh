@@ -104,8 +104,6 @@ load_host_config() {
     done
     config_array+=("${host_conf[@]}")
 
-    print_compartment_config "$compartment" >/dev/null || return 2
-    load_compartment_config "$1" "$compartment"
 }
 
 extract_compartment_name() {
@@ -242,16 +240,17 @@ ckssh() {
     case $retval in
          0) : ;;
          1) err255 "$(basename $0): No config for host '$host'";;
-         2) : ;;
         10) err255 "$(basename $0): Config file not found";;
          *) err255 "$(basename $0): INTERNAL ERROR $retval at $BASH_LINENO";;
     esac
 
     local compartment
     extract_compartment_name compartment config
+    load_compartment_config config "$compartment" || retval=$?
     case $retval in
-        2) err255 "$(basename $0): No config for compartment '$compartment'";;
-        *)
+        0) : ;;
+        1) err255 "$(basename $0): No config for compartment '$compartment'";;
+        *) err255 "$(basename $0): INTERNAL ERROR $retval at $BASH_LINENO";;
     esac
 
     #### Parse CK_SSHCommand
