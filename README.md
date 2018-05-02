@@ -2,22 +2,23 @@ ckssh - SSH Agents with Compartmentalized Keys
 ==============================================
 
 Forwarding of authentication agent connections over ssh is very
-convenient, but also dangerous on hosts where others do or may have root
-access. Anybody who can gain access to the Unix domain socket on which
-the local sshd is listening can send authentication requsts to your
-agent and thus effectively has use of all the keys in your agent.
+convenient, but also dangerous when forwarding to hosts where others
+do or may have root access. Anybody who can gain access to the Unix
+domain socket on which the local sshd is listening can send
+authentication requsts to your agent and thus effectively has use of
+all the keys in your agent.
 
 One way of mitigating this problem is to ask the agent to confirm all
 requests for signatures from particular keys (e.g., by using the `-c`
-option on `ssh-add(1)`). However, this is sometimes inconvenient, and
+option on `ssh-add(1)`). However this is not only inconvenient, but
 not all agents support this.
 
 Ckssh helps mitigate the problem by allowing you to easily use
 separate keys stored in separate agents for connections to different
-hosts. A typical use case would be to set up a separate key for work
-so that a compromised work server (or malicious admin) would gain
-access only to hosts accessible via that key, and not personal hosts.
-or those belonging to other companies.
+hosts. A typical use case would be to set up a separate key and agent
+for work so that a compromised work server (or malicious admin) would
+gain access only to hosts accessible via that key, and not personal
+hosts or those belonging to other companies.
 
 
 Configuration File
@@ -30,12 +31,11 @@ parsed in the same way as `ssh_config`:
 * Empty lines are ignored.
 * Lines starting with `#` are comments, and ignored. A `#` preceeded
   by anything other than whitespace is not a comment.
-* Configuration directives are of the form "<key><whitespace><value>".
+* Configuration directives are of the form `<key><whitespace><value>`.
 
 ### Configuration Parsing Bugs
 
-The current parsing code is not completely compatible with
-ssh_config.
+The current parsing code is not completely compatible with `ssh_config`.
 
 * We do not accept a list of patterns on the `CK_Host` line, just a
   single name that is matched exactly.
