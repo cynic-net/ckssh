@@ -1,3 +1,0 @@
-0xx     Framework tests and the like
-1xx     Tests of pure code (shell functions)
-2xx     Tests of impure code (command line calls)
