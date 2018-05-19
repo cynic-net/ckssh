@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 set -e -o pipefail
 
-BASE=$(cd $(dirname "$0") && pwd -P)
+trap 'echo FAILED!; exit 1' 0
 
-cd "$BASE"
+basedir=$(cd "$(dirname "$0")" && pwd -P)
+cd "$basedir"
 . activate -q
-pytest -q "$@"
+
+pytest -q "$@" t/*.py
+
+eval $(bin/ckssh.py --bash-init)
+#ckset
+
+trap '' 0
