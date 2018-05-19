@@ -7,9 +7,9 @@ basedir=$(cd "$(dirname "$0")" && pwd -P)
 cd "$basedir"
 . activate -q
 
-pytest -q "$@" t/*.py
+PYTHONPATH=bin pytest -q "$@" t/*.py
 
 eval $(bin/ckssh.py --bash-init)
-#ckset
+ckset
 
 trap '' 0
