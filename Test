@@ -15,7 +15,7 @@ PATH="$basedir/bin:$PATH"
 eval $(ckssh.py --bash-init)
 
 CKSSH_PROOF_OF_CONCEPT=''
-ckset --proof-of-concept
+ckset --proof-of-concept >/dev/null 2>&1
 [[ -n $CKSSH_PROOF_OF_CONCEPT ]] || fail 'CKSSH_PROOF_OF_CONCEPT not set'
 
 trap '' 0
