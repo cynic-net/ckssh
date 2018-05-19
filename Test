@@ -3,13 +3,19 @@ set -e -o pipefail
 
 trap 'echo FAILED!; exit 1' 0
 
+fail() { echo 1>&2 'FAILURE:' "$@"; exit 1; }
+
 basedir=$(cd "$(dirname "$0")" && pwd -P)
 cd "$basedir"
 . activate -q
 
 PYTHONPATH=bin pytest -q "$@" t/*.py
 
-eval $(bin/ckssh.py --bash-init)
-ckset
+PATH="$basedir/bin:$PATH"
+eval $(ckssh.py --bash-init)
+
+CKSSH_PROOF_OF_CONCEPT=''
+ckset --proof-of-concept
+[[ -n $CKSSH_PROOF_OF_CONCEPT ]] || fail 'CKSSH_PROOF_OF_CONCEPT not set'
 
 trap '' 0
