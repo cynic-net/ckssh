@@ -1,7 +1,34 @@
 #!/usr/bin/env python
 
 from argparse import ArgumentParser
+from collections import namedtuple as ntup
 from sys import stdout, stderr
+import re
+
+
+CompartmentConfig = ntup('CompartmentConfig', 'name')
+
+def parseconfig(config):
+    parser = re.compile(r'(?:\s*)(\w+)(?:\s*=\s*|\s+)(.+)')
+    compartments = []
+    for line in config:
+        match = parser.match(line)
+        if not match: continue
+        key = match.group(1).lower()
+        value = match.group(2)
+        if key == 'ck_compartment':
+            compartments.append(CompartmentConfig(name=value))
+    return compartments
+
+class CK:
+    def __init__(self, configfile=None, compartment_path=None):
+        self.configfile = configfile
+        self.compartment_path = compartment_path
+        with open(str(self.configfile)) as f:
+            self.compartments = parseconfig(f)
+
+    def get_compartment(self, ssh_auth_sock):
+        return None
 
 
 EVALFILE = stdout
