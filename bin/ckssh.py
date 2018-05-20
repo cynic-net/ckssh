@@ -47,11 +47,12 @@ def evalwrite(s):
     EVALFILE.write('\n')
 
 def print_bash_init():
+    me = str(Path(__file__).resolve())
     evalwrite('''
         ckcommand() {
             local retval=0;
             local evalfile=$(mktemp -t ckssh-eval-XXXXX);
-            ckssh.py --eval-file "$evalfile" "$@"; retval=$?;
+            ''' + me + ''' --eval-file "$evalfile" "$@"; retval=$?;
             eval $(cat "$evalfile");
             rm -f "$evalfile";
             return $retval;
