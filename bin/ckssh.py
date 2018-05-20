@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-from argparse import ArgumentParser
-from collections import namedtuple as ntup
-from sys import stdout, stderr
+from argparse       import ArgumentParser
+from collections    import namedtuple as ntup
+from pathlib        import Path
+from sys            import stdout, stderr
 import re
 
 
@@ -23,11 +24,19 @@ def parseconfig(config):
 class CK:
     def __init__(self, configfile=None, compartment_path=None):
         self.configfile = configfile
-        self.compartment_path = compartment_path
-        with open(str(self.configfile)) as f:
-            self.compartments = parseconfig(f)
+        self.compartment_path = Path(compartment_path)
+        if configfile:
+            with open(str(self.configfile)) as f:
+                self.compartments = parseconfig(f)
+
+    def sockpath(self, name):
+        return Path(self.compartment_path, 'socket', name)
 
     def get_compartment(self, ssh_auth_sock):
+        for c in self.compartments:
+            print(c, self.sockpath(c.name), ssh_auth_sock)
+            if str(self.sockpath(c.name)) == str(ssh_auth_sock):
+                return c.name
         return None
 
 

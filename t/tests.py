@@ -16,7 +16,12 @@ def test_parseconfig():
     assert 'special'        == cs[1].name
     assert 2                == len(cs)
 
-@pytest.mark.xfail
+def test_sockpath():
+    assert Path('/foo/socket/bar') \
+        == CK(compartment_path='/foo/').sockpath('bar')
+    assert Path('/foo/bar/socket/baz') \
+        == CK(compartment_path=Path('/foo/bar')).sockpath('baz')
+
 def test_get_compartment():
     ck = CK(configfile=CONFIGFILE, compartment_path='/ckssh/')
     assert None            == ck.get_compartment('/ckssh/socket/NOT_A_COMP')
