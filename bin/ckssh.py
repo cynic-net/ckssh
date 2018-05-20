@@ -45,17 +45,18 @@ EVALFILE = stdout
 def evalwrite(s):
     EVALFILE.write(s)
     EVALFILE.write('\n')
-    
+
 def print_bash_init():
     evalwrite('''
-        ckset() {
+        ckcommand() {
             local retval=0;
             local evalfile=$(mktemp -t ckssh-eval-XXXXX);
             ckssh.py --eval-file "$evalfile" "$@"; retval=$?;
             eval $(cat "$evalfile");
             rm -f "$evalfile";
             return $retval;
-        }
+        };
+        ckset() { ckcommand ckset "$@"; }
     ''')
 
 def proof_of_concept():
@@ -65,22 +66,25 @@ def proof_of_concept():
     evalwrite('export CKSSH_PROOF_OF_CONCEPT=1;')
 
 def main():
+    subcommands = {
+        'bash-init':            print_bash_init,
+        'proof-of-concept':     proof_of_concept,
+    }
+
     p = ArgumentParser(description='Comparmentalized Key Agents for SSH')
     arg = p.add_argument
-    arg('--bash-init', action='store_true',
-        help='Print code to configure Bash with ckssh commands')
+    arg('--config-file', '-c')
     arg('--eval-file')
-    arg('--proof-of-concept', action='store_true')
+    arg('subcommand', help=' '.join(sorted(subcommands.keys())))
+    arg('params', nargs='*')
     args = p.parse_args()
 
     if args.eval_file:
         global EVALFILE
         EVALFILE = open(args.eval_file, 'wt')
-    if args.proof_of_concept:
-        proof_of_concept()
-        exit(0)
-    if args.bash_init:
-        print_bash_init()
-        exit(0)
+
+    #   This is not really the right way to do subcommands; we should be using
+    #   https://docs.python.org/3/library/argparse.html#sub-commands
+    subcommands[args.subcommand](*args.params)
 
 if __name__ == '__main__': main()

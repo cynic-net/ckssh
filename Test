@@ -10,12 +10,15 @@ cd "$basedir"
 . activate -q
 
 PYTHONPATH=bin pytest -q "$@" t/*.py
-
 PATH="$basedir/bin:$PATH"
-eval $(ckssh.py --bash-init)
+
+#   Simple form when you expect no messages to stdout
+eval $(ckssh.py bash-init)
 
 CKSSH_PROOF_OF_CONCEPT=''
-ckset --proof-of-concept >/dev/null 2>&1
+#   `ckcommand` will separate out the stuff to eval and eval it,
+#   leaving stdout and stderr working as normal.
+ckcommand proof-of-concept >/dev/null 2>&1
 [[ -n $CKSSH_PROOF_OF_CONCEPT ]] || fail 'CKSSH_PROOF_OF_CONCEPT not set'
 
 trap '' 0
