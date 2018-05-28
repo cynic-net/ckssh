@@ -86,7 +86,7 @@ options to be passed on to SSH.
 Copyright and License
 ---------------------
 
-Ckssh is copyright 2016 by Curt J. Sampson <cjs@cynic.net>
+ckssh is copyright 2016, 2018 by Curt J. Sampson <cjs@cynic.net>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
