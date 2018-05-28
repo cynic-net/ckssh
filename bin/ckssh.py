@@ -40,9 +40,10 @@ def runtimedir(env=os.environ):
     return Path('/run/user', str(os.getuid()), 'ckssh')
 
 class CK:
-    def __init__(self, configfile=None, compartment_path=None):
+    def __init__(self, configfile=None, compartment_path=runtimedir()):
         self.configfile = configfile
         self.compartment_path = Path(compartment_path)
+        self.compartments = []
         if configfile:
             with open(str(self.configfile)) as f:
                 self.compartments = parseconfig(f)
@@ -50,7 +51,7 @@ class CK:
     def sockpath(self, name):
         return Path(self.compartment_path, 'socket', name)
 
-    def get_compartment(self, ssh_auth_sock):
+    def get_compartment(self, ssh_auth_sock=os.environ.get('SSH_AUTH_SOCK')):
         for c in self.compartments:
             print(c, self.sockpath(c.name), ssh_auth_sock)
             if str(self.sockpath(c.name)) == str(ssh_auth_sock):
@@ -84,10 +85,16 @@ def test_shell_interface():
     evalwrite('echo evaled;')
     evalwrite('export CKSSH_TEST_SHELL_INTERFACE=1;')
 
+def ckset():
+    ck = CK()
+    compartment = ck.get_compartment() or 'No compartment.'
+    print(compartment)
+
 def main():
     subcommands = {
         'bash-init':            print_bash_init,
         'test-shell-interface': test_shell_interface,
+        'ckset':                ckset,
     }
 
     p = ArgumentParser(description='Comparmentalized Key Agents for SSH')
