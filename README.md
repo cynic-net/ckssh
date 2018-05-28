@@ -21,66 +21,70 @@ gain access only to hosts accessible via that key, and not personal
 hosts or those belonging to other companies.
 
 
-Configuration File
-------------------
+Usage
+-----
 
-The configuration file is found in `$HOME/.ssh/ckssh_config`. It is
-parsed in the same way as `ssh_config`:
+If this is your first time using this, see the [SETUP](SETUP.md) file
+to set up your initial configuration.
 
-* Initial whitespace on a line is ignored.
-* Empty lines are ignored.
-* Lines starting with `#` are comments, and ignored. A `#` preceeded
-  by anything other than whitespace is not a comment.
-* Configuration directives are of the form `<key><whitespace><value>`.
+Basic setting commands are:
 
-### Configuration Parsing Bugs
+    ckssh cjs@cynic.net         # Set the current container
+    ckssh -a                    # Add default keys to the current container
+    ckssh -a cjs@cynic.net      # Do both in one action
 
-The current parsing code is not completely compatible with `ssh_config`.
+In startup scripts for, e.g., your desktop environment you will
+probably want just to set the container without adding keys since at
+that point you might not yet have a way to prompt for the
+passphrase(s).
 
-* We do not accept a list of patterns on the `CK_Host` line, just a
-  single name that is matched exactly.
-* We take parameters only from the first matched `CK_Host` section,
-  and ignore all sections after that.
+### Command Details
 
-### Configuration Directives
+* `ckset [-v]`
 
-The `CK_Compartment` and `CK_Host` directives start separate
-sections of the configuration file; after one of these, subsequent
-configuration directives are read as part of that section up until
-the next `CK_Compartment` or `CK_Host` directive.
+  If `SSH_AUTH_SOCK` is not pointing to a configured compartment or is
+  unset, `No compartment` is printed to stderr. Otherwise the current
+  compartment name is printed to stdout.
 
-#### Compartment Configuration
+  Additional warnings are printed to stderr when the compartment is
+  not running (i.e., no agent is responding on that socket) and when a
+  key defined for the compartment (with a `CK_Keyfile` directive) is
+  not currently loaded.
 
-`CK_Compartment` defines a compartment (ssh-agent process) to
-hold keys.
+  Adding `-v` will print to stdout all the compartment's configured
+  keyfiles, noting which ones are present and absent in the agent.
 
-The ssh-agent socket will be named `$XDG_RUNTIME_DIR/ckssh/socket/$name`
-where `$name` is the parameter provided to `CK_Compartment`.
-`$XDG_RUNTIME_DIR` is expected to be set up as per the [FreeDesktop.org
-basedir spec][basedir]; the program currently fails if it's not set as
-it's unable to properly set up a runtime dir itself.
+  This returns 0 if `SSH_AUTH_SOCK` is pointing to an agent for a
+  running compartment (regardless of what keys are loaded), or 1
+  otherwise.
 
-A `CK_Compartment` section may contain one or more `CK_Keyfile`
-directives, each of which specifies the full path to an SSH private
-key file to be loaded in to the agent with `ssh-add`. Shell variables
-and tildes in the path are interpolated by the shell.
+* `ckset -l [-v]`
 
-Any other configuration directives are treated as configuration
-options to be passed on to `ssh`. These are passed on after (and so
-will be overridden by) directives in the `CK_Host` section.
+  List all compartments (configured with `CK_Compartment` directives)
+  and their status (running or not). With `-v`, also show the keyfiles
+  configured for each compartment and whether or not they are loaded.
 
-[basedir]: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+* `ckset -a`
 
-#### Host Configuration
+  Add all configured but unloaded keys to the current compartment.
+  This will prompt for passphrases where necessary.
 
-The `CK_Host` directive is similar to ssh_config's `Host` directive,
-and starts a host configuration section.
+* `ckset [-a] COMPARTMENT-NAME`
 
-A `CK_CompartmentName` directive specifies the compartment to be used;
-it must be one defined by a `CK_Compartment` directive.
+  Ensure that the given compartment is running (starting an agent if
+  necessary) and switch to it. (Command-line completion should be
+  provided for the name.) With `-a` also attempt to add all keys
+  configured for the compartment that are not already loaded.
 
-Any other configuration directives are treated as configuration
-options to be passed on to SSH.
+  This may be interactive if `-a` is specified (prompting for
+  passphrases), but otherwise is not, allowing setup of compartments
+  in startup scripts such as `xinitrc`.
+
+  Return values:
+  - 0: Changing to the given compartment was successful.
+  - 1: The requested compartment name does not exist.
+  - 2: The compartment could not be started (`ssh-agent` failed to start).
+  - 3: The compartment was started, but not keys could be added (`-a` only).
 
 
 Copyright and License
