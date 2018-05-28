@@ -4,7 +4,7 @@ from argparse       import ArgumentParser
 from collections    import namedtuple as ntup
 from pathlib        import Path
 from sys            import stdout, stderr
-import re
+import os, re
 
 
 CompartmentConfig = ntup('CompartmentConfig', 'name')
@@ -20,6 +20,24 @@ def parseconfig(config):
         if key == 'ck_compartment':
             compartments.append(CompartmentConfig(name=value))
     return compartments
+
+def runtimedir(env=os.environ):
+    #   If envvar XDG_RUNTIME_DIR is set, we're set. However, in non-desktop
+    #   environments (e.g., ssh login to a server) it's usually not set
+    #   (and it's probably nonexistent on Windows, too). In that case
+    #   for the moment, we just use `/run/user/{uid}` which will be there
+    #   on modern (e.g., Ubuntu >= 14.04) Linux systems.
+    #
+    #   For other systems, the current workaround is for the user to set
+    #   XDG_RUNTIME_DIR himself. In the long run we probably want to work
+    #   out better fallback plans.
+    #
+    #   For more information on the XDG Base Directory Specification, see:
+    #   https://specifications.freedesktop.org/basedir-spec/latest/
+    xdg = env.get('XDG_RUNTIME_DIR')
+    if xdg:
+        return Path(xdg, 'ckssh')
+    return Path('/run/user', str(os.getuid()), 'ckssh')
 
 class CK:
     def __init__(self, configfile=None, compartment_path=None):
