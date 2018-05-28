@@ -60,16 +60,16 @@ def print_bash_init():
         ckset() { ckcommand ckset "$@"; }
     ''')
 
-def proof_of_concept():
+def test_shell_interface():
     print('stdout')
     print('stderr', file=stderr)
     evalwrite('echo evaled;')
-    evalwrite('export CKSSH_PROOF_OF_CONCEPT=1;')
+    evalwrite('export CKSSH_TEST_SHELL_INTERFACE=1;')
 
 def main():
     subcommands = {
         'bash-init':            print_bash_init,
-        'proof-of-concept':     proof_of_concept,
+        'test-shell-interface': test_shell_interface,
     }
 
     p = ArgumentParser(description='Comparmentalized Key Agents for SSH')

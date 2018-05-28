@@ -14,10 +14,11 @@ PYTHONPATH=bin pytest -q "$@" t/*.py
 #   Simple form when you expect no messages to stdout
 eval $(bin/ckssh.py bash-init)
 
-CKSSH_PROOF_OF_CONCEPT=''
+CKSSH_TEST_SHELL_INTERFACE=''
 #   `ckcommand` will separate out the stuff to eval and eval it,
 #   leaving stdout and stderr working as normal.
-ckcommand proof-of-concept >/dev/null 2>&1
-[[ -n $CKSSH_PROOF_OF_CONCEPT ]] || fail 'CKSSH_PROOF_OF_CONCEPT not set'
+ckcommand test-shell-interface >/dev/null 2>&1
+[[ -n $CKSSH_TEST_SHELL_INTERFACE ]] \
+    || fail 'CKSSH_TEST_SHELL_INTERFACE not set'
 
 trap '' 0
