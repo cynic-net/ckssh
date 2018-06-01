@@ -6,6 +6,13 @@ from pathlib        import Path
 from sys            import stdout, stderr
 import os, re
 
+############################################################
+#   Defaults
+
+CONFIG_FILE = '~/.ssh/ckssh_config'
+
+############################################################
+#   Functions
 
 CompartmentConfig = ntup('CompartmentConfig', 'name')
 
@@ -41,19 +48,17 @@ def runtimedir(env=os.environ):
 
 class CK:
     def __init__(self, configfile=None, compartment_path=runtimedir()):
-        self.configfile = configfile
+        self.configfile = configfile or os.path.expanduser(CONFIG_FILE)
         self.compartment_path = Path(compartment_path)
         self.compartments = []
-        if configfile:
-            with open(str(self.configfile)) as f:
-                self.compartments = parseconfig(f)
+        with open(str(self.configfile)) as f:
+            self.compartments = parseconfig(f)
 
     def sockpath(self, name):
         return Path(self.compartment_path, 'socket', name)
 
-    def get_compartment(self, ssh_auth_sock=os.environ.get('SSH_AUTH_SOCK')):
+    def compartment_name(self, ssh_auth_sock=os.environ.get('SSH_AUTH_SOCK')):
         for c in self.compartments:
-            print(c, self.sockpath(c.name), ssh_auth_sock)
             if str(self.sockpath(c.name)) == str(ssh_auth_sock):
                 return c.name
         return None
@@ -87,8 +92,11 @@ def test_shell_interface():
 
 def ckset():
     ck = CK()
-    compartment = ck.get_compartment() or 'No compartment.'
+    compartment = ck.compartment_name() or 'No compartment.'
     print(compartment)
+
+############################################################
+#   Main
 
 def main():
     subcommands = {
@@ -105,6 +113,9 @@ def main():
     arg('params', nargs='*')
     args = p.parse_args()
 
+    if args.config_file:
+        global CONFIG_FILE
+        CONFIG_FILE=args.config_file
     if args.eval_file:
         global EVALFILE
         EVALFILE = open(args.eval_file, 'wt')

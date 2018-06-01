@@ -38,9 +38,9 @@ def test_sockpath():
     assert Path('/foo/bar/socket/baz') \
         == CK(compartment_path=Path('/foo/bar')).sockpath('baz')
 
-def test_get_compartment():
+def test_compartment_name():
     ck = CK(configfile=CONFIGFILE, compartment_path='/ckssh/')
-    assert None            == ck.get_compartment('/ckssh/socket/NOT_A_COMP')
-    assert None            == ck.get_compartment('/NOTCK/socket/special')
-    assert 'special'       == ck.get_compartment('/ckssh/socket/special')
-    assert 'cjs@cynic.net' == ck.get_compartment('/ckssh/socket/cjs@cynic.net')
+    assert None            == ck.compartment_name('/ckssh/socket/NOT_A_COMP')
+    assert None            == ck.compartment_name('/NOTCK/socket/special')
+    assert 'special'       == ck.compartment_name('/ckssh/socket/special')
+    assert 'cjs@cynic.net' == ck.compartment_name('/ckssh/socket/cjs@cynic.net')

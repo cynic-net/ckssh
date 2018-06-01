@@ -24,9 +24,13 @@ ckcommand test-shell-interface >/dev/null 2>&1
 #   Functional testing like this is starting to get painful; we need to
 #   find a better way to test this stuff (ideally with unit tests).
 #unset SSH_AUTH_SOCK
-actual=$(ckset --config-file t/mock_home/.ssh/ckssh_config)
-#   XXX we should just set HOME and let it find the config file
-[[ $actual = 'No compartment.' ]] || fail \
-    "ckset: expected 'No compartment.', actual '$actual'"
+_compartment=cjs@cynic.net
+actual=$(
+    HOME="$basedir/t/mock_home"
+    XDG_RUNTIME_DIR=/r
+    SSH_AUTH_SOCK=/r/ckssh/socket/$_compartment
+    ckset)
+[[ $actual = $_compartment ]] || fail \
+    "ckset: expected $_compartment, actual '$actual'"
 
 trap '' 0
