@@ -41,13 +41,13 @@ def test_sockpath():
 def test_compartment_name_default_params():
     assert CK().compartment_name()
 
-@pytest.mark.parametrize('sock,expected', [
-    [None,                              None],
-    ['/ckssh/socket/NOT_A_COMP',        None],
-    ['/NOTCK/socket/special',           None],
-    ['/ckssh/socket/special',           'special'],
-    ['/ckssh/socket/cjs@cynic.net',     'cjs@cynic.net'],
+@pytest.mark.parametrize('expected,sock', [
+    [None,                      None,                               ],
+    [CK.UnknownCompartment,     '/ckssh/socket/NOT_A_COMP',         ],
+    [CK.UnknownCompartment,     '/NOTCK/socket/special',            ],
+    ['special',                 '/ckssh/socket/special',            ],
+    ['cjs@cynic.net',           '/ckssh/socket/cjs@cynic.net',      ],
 ])
-def test_compartment_name(sock, expected):
+def test_compartment_name(expected, sock):
     ck = CK(configfile=CONFIGFILE, compartment_path='/ckssh/')
     assert expected == ck.compartment_name(sock)

@@ -47,6 +47,8 @@ def runtimedir(env=os.environ):
     return Path('/run/user', str(os.getuid()), 'ckssh')
 
 class CK:
+    class UnknownCompartment: pass
+
     def __init__(self, configfile=None, compartment_path=runtimedir()):
         self.configfile = configfile or os.path.expanduser(CONFIG_FILE)
         self.compartment_path = Path(compartment_path)
@@ -58,10 +60,12 @@ class CK:
         return Path(self.compartment_path, 'socket', name)
 
     def compartment_name(self, ssh_auth_sock=os.environ.get('SSH_AUTH_SOCK')):
+        if not ssh_auth_sock:
+            return None
         for c in self.compartments:
             if str(self.sockpath(c.name)) == str(ssh_auth_sock):
                 return c.name
-        return None
+        return self.UnknownCompartment
 
 
 EVALFILE = stdout
@@ -92,8 +96,13 @@ def test_shell_interface():
 
 def ckset():
     ck = CK()
-    compartment = ck.compartment_name() or 'No compartment.'
-    print(compartment)
+    compartment = ck.compartment_name()
+    if compartment == None:
+        print('No compartment.', file=stderr)
+    elif compartment == CK.UnknownCompartment:
+        print('Unknown compartment.', file=stderr)
+    else:
+        print(compartment)
 
 ############################################################
 #   Main

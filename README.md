@@ -42,14 +42,15 @@ passphrase(s).
 
 * `ckset [-v]`
 
-  If `SSH_AUTH_SOCK` is not pointing to a configured compartment or is
-  unset, `No compartment` is printed to stderr. Otherwise the current
-  compartment name is printed to stdout.
+  If `SSH_AUTH_SOCK` is unset, 'No compartment.' is printed to stderr.
+  If it's set, but not to a compartment known from the configuration
+  file, 'Unknown compartment.' is printed to stderr. Otherwise the
+  compartment name is printed to stdtout.
 
-  Additional warnings are printed to stderr when the compartment is
-  not running (i.e., no agent is responding on that socket) and when a
-  key defined for the compartment (with a `CK_Keyfile` directive) is
-  not currently loaded.
+  For known compartments, additional warnings are printed to stderr
+  when the compartment is not running (i.e., no agent is responding on
+  that socket) and when a key defined for the compartment (with a
+  `CK_Keyfile` directive) is not currently loaded.
 
   Adding `-v` will print to stdout all the compartment's configured
   keyfiles, noting which ones are present and absent in the agent.
