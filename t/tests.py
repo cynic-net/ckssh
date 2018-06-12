@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 
-from ckssh import ( parseconfig, runtimedir, CK,)
+from ckssh import *
 
 TESTDIR = Path(__file__).parent
 CONFIGFILE = Path(TESTDIR, 'mock_home/.ssh/ckssh_config')
@@ -38,9 +38,15 @@ def test_sockpath():
     assert Path('/foo/bar/socket/baz') \
         == CK(compartment_path=Path('/foo/bar')).sockpath('baz')
 
-def test_compartment_name():
+def test_compartment_name_default_params():
+    assert CK().compartment_name()
+
+@pytest.mark.parametrize('sock,expected', [
+    ['/ckssh/socket/NOT_A_COMP',        None],
+    ['/NOTCK/socket/special',           None],
+    ['/ckssh/socket/special',           'special'],
+    ['/ckssh/socket/cjs@cynic.net',     'cjs@cynic.net'],
+])
+def test_compartment_name(sock, expected):
     ck = CK(configfile=CONFIGFILE, compartment_path='/ckssh/')
-    assert None            == ck.compartment_name('/ckssh/socket/NOT_A_COMP')
-    assert None            == ck.compartment_name('/NOTCK/socket/special')
-    assert 'special'       == ck.compartment_name('/ckssh/socket/special')
-    assert 'cjs@cynic.net' == ck.compartment_name('/ckssh/socket/cjs@cynic.net')
+    assert expected == ck.compartment_name(sock)
