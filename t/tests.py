@@ -42,6 +42,7 @@ def test_compartment_name_default_params():
     assert CK().compartment_name()
 
 @pytest.mark.parametrize('sock,expected', [
+    [None,                              None],
     ['/ckssh/socket/NOT_A_COMP',        None],
     ['/NOTCK/socket/special',           None],
     ['/ckssh/socket/special',           'special'],
