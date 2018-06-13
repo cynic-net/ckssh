@@ -108,26 +108,25 @@ def ckset():
 #   Main
 
 def main():
+    global CONFIG_FILE, EVALFILE
+
     subcommands = {
         'bash-init':            print_bash_init,
         'test-shell-interface': test_shell_interface,
         'ckset':                ckset,
     }
-
     p = ArgumentParser(description='Comparmentalized Key Agents for SSH')
     arg = p.add_argument
-    arg('--config-file', '-c')
-    arg('--eval-file')
+    arg('-c', '--config-file', default=CONFIG_FILE,
+        help='config file to use, default {}'.format(CONFIG_FILE))
+    arg('--eval-file',
+        help='file to which to write commands for parent shell')
     arg('subcommand', help=' '.join(sorted(subcommands.keys())))
     arg('params', nargs='*')
     args = p.parse_args()
 
-    if args.config_file:
-        global CONFIG_FILE
-        CONFIG_FILE=args.config_file
-    if args.eval_file:
-        global EVALFILE
-        EVALFILE = open(args.eval_file, 'wt')
+    CONFIG_FILE = args.config_file
+    if args.eval_file:  EVALFILE = open(args.eval_file, 'wt')
 
     #   This is not really the right way to do subcommands; we should be using
     #   https://docs.python.org/3/library/argparse.html#sub-commands
