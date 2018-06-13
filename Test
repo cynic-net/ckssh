@@ -14,12 +14,12 @@ PYTHONPATH=bin pytest -q "$@" t/*.py
 #   Simple form when you expect no messages to stdout
 eval $(bin/ckssh.py bash-init)
 
-CKSSH_TEST_SHELL_INTERFACE=''
+CKSSH_SHELL_INTERFACE_TEST=''
 #   `ckcommand` will separate out the stuff to eval and eval it,
 #   leaving stdout and stderr working as normal.
-ckcommand test-shell-interface >/dev/null 2>&1
-[[ -n $CKSSH_TEST_SHELL_INTERFACE ]] \
-    || fail 'CKSSH_TEST_SHELL_INTERFACE not set'
+ckcommand shell-interface-test >/dev/null 2>&1
+[[ -n $CKSSH_SHELL_INTERFACE_TEST ]] \
+    || fail 'CKSSH_SHELL_INTERFACE_TEST not set'
 
 #   Functional testing like this is starting to get painful; we need to
 #   find a better way to test this stuff (ideally with unit tests).

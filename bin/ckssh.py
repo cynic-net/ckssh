@@ -88,11 +88,11 @@ def print_bash_init():
         ckset() { ckcommand ckset "$@"; }
     ''')
 
-def test_shell_interface():
+def shell_interface_test():
     print('stdout')
     print('stderr', file=stderr)
     evalwrite('echo evaled;')
-    evalwrite('export CKSSH_TEST_SHELL_INTERFACE=1;')
+    evalwrite('export CKSSH_SHELL_INTERFACE_TEST=1;')
 
 def ckset():
     ck = CK()
@@ -112,7 +112,7 @@ def main():
 
     subcommands = {
         'bash-init':            print_bash_init,
-        'test-shell-interface': test_shell_interface,
+        'shell-interface-test': shell_interface_test,
         'ckset':                ckset,
     }
     p = ArgumentParser(description='Comparmentalized Key Agents for SSH')
