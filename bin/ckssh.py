@@ -74,7 +74,7 @@ def evalwrite(s):
     EVALFILE.write(s)
     EVALFILE.write('\n')
 
-def print_bash_init():
+def print_bash_init(_):
     me = str(Path(__file__).resolve())
     evalwrite('''
         ckcommand() {
@@ -88,13 +88,13 @@ def print_bash_init():
         ckset() { ckcommand ckset "$@"; }
     ''')
 
-def shell_interface_test():
+def shell_interface_test(_):
     print('stdout')
     print('stderr', file=stderr)
     evalwrite('echo evaled;')
     evalwrite('export CKSSH_SHELL_INTERFACE_TEST=1;')
 
-def ckset():
+def ckset(args):
     ck = CK()
     compartment = ck.compartment_name()
     if compartment == None:
@@ -130,6 +130,6 @@ def main():
 
     #   This is not really the right way to do subcommands; we should be using
     #   https://docs.python.org/3/library/argparse.html#sub-commands
-    subcommands[args.subcommand](*args.params)
+    subcommands[args.subcommand](args)
 
 if __name__ == '__main__': main()
