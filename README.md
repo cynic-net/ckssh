@@ -87,6 +87,14 @@ passphrase(s).
   - 2: The compartment could not be started (`ssh-agent` failed to start).
   - 3: The compartment was started, but not keys could be added (`-a` only).
 
+* `ckset -A KEYFILE [-A KEYFILE] [COMPARTMENT-NAME]`
+
+  As above, but add keys specified by the KEYFILE arguments to the
+  `-A` option(s), setting the compartment first if the optional
+  COMPARTMENT-NAME is given. If COMPARTMENT-NAME is not given this
+  will add keys to the current compartment (SSH agent) even if it is
+  unknown.
+
 
 Copyright and License
 ---------------------
