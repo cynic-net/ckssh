@@ -4,7 +4,7 @@ from argparse       import ArgumentParser
 from collections    import namedtuple as ntup
 from pathlib        import Path
 from sys            import stdout, stderr
-import os, re
+import os, re, sys
 
 ############################################################
 #   Defaults
@@ -97,6 +97,10 @@ def shell_interface_test(_):
     evalwrite('export CKSSH_SHELL_INTERFACE_TEST=1;')
 
 def ckset(args):
+    if args.params:
+        print('Bad args: {}'.format(args.params), file=stderr)
+        return 2
+
     ck = CK()
     compartment = ck.compartment_from_sock()
     if compartment == None:
@@ -105,6 +109,11 @@ def ckset(args):
         print('Unknown compartment.', file=stderr)
     else:
         print(compartment.name)
+
+    #   We need to check to see if the compartment is running and
+    #   return 0 in that case.
+    return 1
+
 
 ############################################################
 #   Main
@@ -132,6 +141,6 @@ def main():
 
     #   This is not really the right way to do subcommands; we should be using
     #   https://docs.python.org/3/library/argparse.html#sub-commands
-    subcommands[args.subcommand](args)
+    sys.exit(subcommands[args.subcommand](args))
 
 if __name__ == '__main__': main()

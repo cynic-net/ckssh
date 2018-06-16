@@ -9,7 +9,7 @@ basedir=$(cd "$(dirname "$0")" && pwd -P)
 cd "$basedir"
 . activate -q
 
-PYTHONPATH=bin pytest -q "$@" t/*.py
+PYTHONPATH=bin pytest -qq "$@" t/*.py
 
 #   Simple form when you expect no messages to stdout
 eval $(bin/ckssh.py bash-init)
@@ -25,12 +25,14 @@ ckcommand shell-interface-test >/dev/null 2>&1
 #   find a better way to test this stuff (ideally with unit tests).
 #unset SSH_AUTH_SOCK
 _compartment=cjs@cynic.net
+exitcode=0
 actual=$(
     HOME="$basedir/t/mock_home"
-    XDG_RUNTIME_DIR=/r
-    SSH_AUTH_SOCK=/r/ckssh/socket/$_compartment
-    ckset)
+    XDG_RUNTIME_DIR=/test-xdg-rtdir-nonexistent
+    SSH_AUTH_SOCK=/test-xdg-rtdir-nonexistent/ckssh/socket/$_compartment
+    ckset) || exitcode=$?
 [[ $actual = $_compartment ]] || fail \
     "ckset: expected $_compartment, actual '$actual'"
+[[ $exitcode -eq 1 ]] || fail "ckset: expected \$?=1, actual \$?=$exitcode"
 
 trap '' 0

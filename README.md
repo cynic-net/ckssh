@@ -56,8 +56,8 @@ passphrase(s).
   keyfiles, noting which ones are present and absent in the agent.
 
   This returns 0 if `SSH_AUTH_SOCK` is pointing to an agent for a
-  running compartment (regardless of what keys are loaded), or 1
-  otherwise.
+  running compartment (regardless of whether it's known or not or what
+  keys are loaded), or 1 otherwise.
 
 * `ckset -l [-v]`
 
