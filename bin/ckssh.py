@@ -116,7 +116,7 @@ def ckset(args):
     #   return 0 in that case.
     e = call(['ssh-add', '-l'], stdin=devnull, stdout=devnull, stderr=devnull)
     if e == 2:
-        return 1
+        return 2
     return 0
 
 

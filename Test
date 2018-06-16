@@ -33,6 +33,6 @@ actual=$(
     ckset) || exitcode=$?
 [[ $actual = $_compartment ]] || fail \
     "ckset: expected $_compartment, actual '$actual'"
-[[ $exitcode -eq 1 ]] || fail "ckset: expected \$?=1, actual \$?=$exitcode"
+[[ $exitcode -eq 2 ]] || fail "ckset: expected \$?=2, actual \$?=$exitcode"
 
 trap '' 0
