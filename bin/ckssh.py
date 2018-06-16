@@ -14,8 +14,6 @@ CONFIG_FILE = '~/.ssh/ckssh_config'
 ############################################################
 #   Functions
 
-CompartmentConfig = ntup('CompartmentConfig', 'name')
-
 def parseconfig(config):
     parser = re.compile(r'(?:\s*)(\w+)(?:\s*=\s*|\s+)(.+)')
     compartments = []
@@ -25,7 +23,7 @@ def parseconfig(config):
         key = match.group(1).lower()
         value = match.group(2)
         if key == 'ck_compartment':
-            compartments.append(CompartmentConfig(name=value))
+            compartments.append(CK.CompartmentConfig(name=value))
     return compartments
 
 def runtimedir(env=os.environ):
@@ -47,6 +45,10 @@ def runtimedir(env=os.environ):
     return Path('/run/user', str(os.getuid()), 'ckssh')
 
 class CK:
+    #   Default socket path to use when not specified
+    SOCK = os.environ.get('SSH_AUTH_SOCK')
+
+    CompartmentConfig = ntup('CompartmentConfig', 'name')
     class UnknownCompartment: pass
 
     def __init__(self, configfile=None, compartment_path=runtimedir()):
@@ -59,12 +61,12 @@ class CK:
     def sockpath(self, name):
         return Path(self.compartment_path, 'socket', name)
 
-    def compartment_name(self, ssh_auth_sock=os.environ.get('SSH_AUTH_SOCK')):
+    def compartment_from_sock(self, ssh_auth_sock=SOCK):
         if not ssh_auth_sock:
             return None
         for c in self.compartments:
             if str(self.sockpath(c.name)) == str(ssh_auth_sock):
-                return c.name
+                return c
         return self.UnknownCompartment
 
 
@@ -96,13 +98,13 @@ def shell_interface_test(_):
 
 def ckset(args):
     ck = CK()
-    compartment = ck.compartment_name()
+    compartment = ck.compartment_from_sock()
     if compartment == None:
         print('No compartment.', file=stderr)
     elif compartment == CK.UnknownCompartment:
         print('Unknown compartment.', file=stderr)
     else:
-        print(compartment)
+        print(compartment.name)
 
 ############################################################
 #   Main
