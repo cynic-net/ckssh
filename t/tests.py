@@ -52,6 +52,11 @@ def test_conf():
 
     c = cs('/ckssh/socket/special')
     assert 'special' == c.name
+    assert ['/special/special.priv'] == c.keyfiles
 
     c = cs('/ckssh/socket/cjs@cynic.net')
     assert 'cjs@cynic.net' == c.name
+    assert [
+        '/home/cjs/privkeys/cjs@cynic.net-160819',
+        '~/.ssh/cjs@cynic.net-120531',
+    ] == c.keyfiles

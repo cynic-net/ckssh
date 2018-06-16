@@ -2,6 +2,7 @@
 
 from argparse       import ArgumentParser
 from collections    import namedtuple as ntup
+from os             import path
 from pathlib        import Path
 from subprocess     import call
 from sys            import stdout, stderr
@@ -19,13 +20,25 @@ devnull = open(os.devnull, 'w')
 def parseconfig(config):
     parser = re.compile(r'(?:\s*)(\w+)(?:\s*=\s*|\s+)(.+)')
     compartments = []
+    current = None
     for line in config:
         match = parser.match(line)
         if not match: continue
         key = match.group(1).lower()
         value = match.group(2)
+
+        if key == 'ck_host':
+            if current:  compartments.append(current)
+            current = None
         if key == 'ck_compartment':
-            compartments.append(CK.CompartmentConfig(name=value))
+            if current:  compartments.append(current)
+            current = CK.CompartmentConfig(name=value, keyfiles=[])
+        if key == 'ck_keyfile':
+            if current:
+                current.keyfiles.append(value)
+            else:
+                raise RuntimeError('Got keyfile without compartment')
+
     return compartments
 
 def runtimedir(env=os.environ):
@@ -50,7 +63,7 @@ class CK:
     #   Default socket path to use when not specified
     SOCK = os.environ.get('SSH_AUTH_SOCK')
 
-    CompartmentConfig = ntup('CompartmentConfig', 'name')
+    CompartmentConfig = ntup('CompartmentConfig', 'name,keyfiles')
     class UnknownCompartment: pass
 
     def __init__(self, configfile=None, compartment_path=runtimedir()):
@@ -107,10 +120,19 @@ def ckset(args):
     compartment = ck.compartment_from_sock()
     if compartment == None:
         print('No compartment.', file=stderr)
+        return 1
     elif compartment == CK.UnknownCompartment:
         print('Unknown compartment.', file=stderr)
+        if args.a:
+            return 1    # We don't know a list of keys for this compartment.
     else:
         print(compartment.name)
+        if args.a:
+            exitcode = 0
+            for keyfile in compartment.keyfiles:
+                (dir, file) = path.split(keyfile)
+                e = call(['ssh-add', file], cwd=path.expanduser(dir))
+                if exitcode == 0: exitcode = e
 
     #   We need to check to see if the compartment is running and
     #   return 0 in that case.
@@ -133,6 +155,8 @@ def main():
     }
     p = ArgumentParser(description='Comparmentalized Key Agents for SSH')
     arg = p.add_argument
+    arg('-a', action='store_true',
+        help='Add all configured but unloaded keys to the compartment.')
     arg('-c', '--config-file', default=CONFIG_FILE,
         help='config file to use, default {}'.format(CONFIG_FILE))
     arg('--eval-file',
