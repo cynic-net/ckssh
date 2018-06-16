@@ -3,6 +3,7 @@
 from argparse       import ArgumentParser
 from collections    import namedtuple as ntup
 from pathlib        import Path
+from subprocess     import call
 from sys            import stdout, stderr
 import os, re, sys
 
@@ -10,6 +11,7 @@ import os, re, sys
 #   Defaults
 
 CONFIG_FILE = '~/.ssh/ckssh_config'
+devnull = open(os.devnull, 'w')
 
 ############################################################
 #   Functions
@@ -112,7 +114,10 @@ def ckset(args):
 
     #   We need to check to see if the compartment is running and
     #   return 0 in that case.
-    return 1
+    e = call(['ssh-add', '-l'], stdin=devnull, stdout=devnull, stderr=devnull)
+    if e == 2:
+        return 1
+    return 0
 
 
 ############################################################
