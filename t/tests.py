@@ -1,7 +1,10 @@
-from pathlib import Path
-import pytest
+from    io import StringIO
+from    pathlib import Path
+import  pytest
 
-from ckssh import *
+import  ckssh
+from    ckssh import *
+
 
 TESTDIR = Path(__file__).parent
 CONFIGFILE = Path(TESTDIR, 'mock_home/.ssh/ckssh_config')
@@ -64,3 +67,13 @@ def test_conf():
 
     c = cs('/ckssh/socket/empty')
     assert 'empty' == c.name
+
+def test_evalwrite():
+    ckssh.EVALFILE = StringIO()
+    evalwrite('foo')
+    assert 'foo\n' == ckssh.EVALFILE.getvalue()
+
+def test_print_bash_init():
+    ckssh.EVALFILE = StringIO()
+    ckssh.print_bash_init(None)
+    assert 'ckset()' in ckssh.EVALFILE.getvalue()
