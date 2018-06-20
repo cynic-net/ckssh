@@ -15,7 +15,8 @@ def test_parseconfig():
         cs = parseconfig(f)
     assert 'cjs@cynic.net'  == cs[0].name
     assert 'special'        == cs[1].name
-    assert 2                == len(cs)
+    assert 'empty'          == cs[2].name
+    assert 3                == len(cs)
 
 def test_runtimedir():
     assert Path('/foo/ckssh') == runtimedir({'XDG_RUNTIME_DIR': '/foo'})
@@ -60,3 +61,6 @@ def test_conf():
         '/home/cjs/privkeys/cjs@cynic.net-160819',
         '~/.ssh/cjs@cynic.net-120531',
     ] == c.keyfiles
+
+    c = cs('/ckssh/socket/empty')
+    assert 'empty' == c.name

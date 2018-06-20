@@ -24,15 +24,14 @@ def parseconfig(config):
     for line in config:
         match = parser.match(line)
         if not match: continue
+
         key = match.group(1).lower()
         value = match.group(2)
-
         if key == 'ck_host':
-            if current:  compartments.append(current)
             current = None
         if key == 'ck_compartment':
-            if current:  compartments.append(current)
             current = CK.CompartmentConfig(name=value, keyfiles=[])
+            compartments.append(current)
         if key == 'ck_keyfile':
             if current:
                 current.keyfiles.append(value)
