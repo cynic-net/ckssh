@@ -77,3 +77,13 @@ def test_print_bash_init():
     ckssh.EVALFILE = StringIO()
     ckssh.print_bash_init(None)
     assert 'ckset()' in ckssh.EVALFILE.getvalue()
+
+
+Args = ntup('TestArgs', 'params, a')
+Args.__new__.__defaults__ = ([], False)
+
+def test_ckset_show(capsys):
+    ckset(Args())
+    cap = capsys.readouterr()
+    assert 'cynic\n' == cap.out
+    assert '' == cap.err
