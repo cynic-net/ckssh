@@ -36,3 +36,4 @@ actual=$(
 [[ $exitcode -eq 2 ]] || fail "ckset: expected \$?=2, actual \$?=$exitcode"
 
 trap '' 0
+echo OK
