@@ -130,7 +130,8 @@ def ckset(args):
             exitcode = 0
             for keyfile in compartment.keyfiles:
                 (dir, file) = path.split(keyfile)
-                e = call(['ssh-add', file], cwd=path.expanduser(dir))
+                e = call(['ssh-add', '-t', '10h', file],
+                         cwd=path.expanduser(dir))
                 if exitcode == 0: exitcode = e
 
     #   We need to check to see if the compartment is running and
