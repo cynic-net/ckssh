@@ -17,6 +17,11 @@ devnull = open(os.devnull, 'w')
 ############################################################
 #   Functions
 
+class Compartment(object):
+    def __init__(self, name, keyfiles):
+        self.name = name
+        self.keyfiles = keyfiles
+
 def parseconfig(stream):
     parser = re.compile(r'(?:\s*)(\w+)(?:\s*=\s*|\s+)(.+)')
     compartments = []
@@ -30,7 +35,7 @@ def parseconfig(stream):
         if key == 'ck_host':
             current = None
         if key == 'ck_compartment':
-            current = CK.CompartmentConfig(name=value, keyfiles=[])
+            current = Compartment(name=value, keyfiles=[])
             compartments.append(current)
         if key == 'ck_keyfile':
             if current:
@@ -62,7 +67,6 @@ class CK:
     #   Default socket path to use when not specified
     SOCK = os.environ.get('SSH_AUTH_SOCK')
 
-    CompartmentConfig = ntup('CompartmentConfig', 'name,keyfiles')
     class UnknownCompartment: pass
 
     def __init__(self, configfile=None, compartment_path=runtimedir()):
