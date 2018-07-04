@@ -17,11 +17,11 @@ devnull = open(os.devnull, 'w')
 ############################################################
 #   Functions
 
-def parseconfig(config):
+def parseconfig(stream):
     parser = re.compile(r'(?:\s*)(\w+)(?:\s*=\s*|\s+)(.+)')
     compartments = []
     current = None
-    for line in config:
+    for line in stream:
         match = parser.match(line)
         if not match: continue
 
@@ -161,6 +161,9 @@ def main():
         help='config file to use, default {}'.format(CONFIG_FILE))
     arg('--eval-file',
         help='file to which to write commands for parent shell')
+    arg('-s', '--start', action='store_true',
+        help='If necessary, start agent for compartment'
+            ' (automatic when changing compartments)')
     arg('subcommand', help=' '.join(sorted(subcommands.keys())))
     arg('params', nargs='*')
     args = p.parse_args()
