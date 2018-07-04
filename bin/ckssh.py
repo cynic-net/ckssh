@@ -11,11 +11,29 @@ import os, re, sys
 ############################################################
 #   Defaults
 
-CONFIG_FILE = '~/.ssh/ckssh_config'
-devnull = open(os.devnull, 'w')
+CONFIG_FILE     = '~/.ssh/ckssh_config'
+DEVNULL         = open(os.devnull, 'w')
 
 ############################################################
-#   Functions
+#   Compartment classes and functions
+
+def runtimedir(env=os.environ):
+    #   If envvar XDG_RUNTIME_DIR is set, we're set. However, in non-desktop
+    #   environments (e.g., ssh login to a server) it's usually not set
+    #   (and it's probably nonexistent on Windows, too). In that case
+    #   for the moment, we just use `/run/user/{uid}` which will be there
+    #   on modern (e.g., Ubuntu >= 14.04) Linux systems.
+    #
+    #   For other systems, the current workaround is for the user to set
+    #   XDG_RUNTIME_DIR himself. In the long run we probably want to work
+    #   out better fallback plans.
+    #
+    #   For more information on the XDG Base Directory Specification, see:
+    #   https://specifications.freedesktop.org/basedir-spec/latest/
+    xdg = env.get('XDG_RUNTIME_DIR')
+    if xdg:
+        return Path(xdg, 'ckssh')
+    return Path('/run/user', str(os.getuid()), 'ckssh')
 
 class Compartment(object):
     def __init__(self, name, keyfiles):
@@ -45,24 +63,6 @@ def parseconfig(stream):
 
     return compartments
 
-def runtimedir(env=os.environ):
-    #   If envvar XDG_RUNTIME_DIR is set, we're set. However, in non-desktop
-    #   environments (e.g., ssh login to a server) it's usually not set
-    #   (and it's probably nonexistent on Windows, too). In that case
-    #   for the moment, we just use `/run/user/{uid}` which will be there
-    #   on modern (e.g., Ubuntu >= 14.04) Linux systems.
-    #
-    #   For other systems, the current workaround is for the user to set
-    #   XDG_RUNTIME_DIR himself. In the long run we probably want to work
-    #   out better fallback plans.
-    #
-    #   For more information on the XDG Base Directory Specification, see:
-    #   https://specifications.freedesktop.org/basedir-spec/latest/
-    xdg = env.get('XDG_RUNTIME_DIR')
-    if xdg:
-        return Path(xdg, 'ckssh')
-    return Path('/run/user', str(os.getuid()), 'ckssh')
-
 class CK:
     #   Default socket path to use when not specified
     SOCK = os.environ.get('SSH_AUTH_SOCK')
@@ -87,6 +87,8 @@ class CK:
                 return c
         return self.UnknownCompartment
 
+############################################################
+#   Program operation classes and functions
 
 EVALFILE = stdout
 
@@ -140,7 +142,7 @@ def ckset(args):
 
     #   We need to check to see if the compartment is running and
     #   return 0 in that case.
-    e = call(['ssh-add', '-l'], stdin=devnull, stdout=devnull, stderr=devnull)
+    e = call(['ssh-add', '-l'], stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
     if e == 2:
         return 2
     return 0

@@ -13,14 +13,6 @@ def test_test_paths():
     assert TESTDIR.is_dir()
     assert CONFIGFILE.is_file()
 
-def test_parseconfig():
-    with open(str(CONFIGFILE)) as f:
-        cs = parseconfig(f)
-    assert 'cjs@cynic.net'  == cs[0].name
-    assert 'special'        == cs[1].name
-    assert 'empty'          == cs[2].name
-    assert 3                == len(cs)
-
 def test_runtimedir():
     assert Path('/foo/ckssh') == runtimedir({'XDG_RUNTIME_DIR': '/foo'})
     assert 'ckssh' == runtimedir({}).name
