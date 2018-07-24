@@ -41,12 +41,15 @@ def test_parseconfig():
     assert [ '/home/cjs/privkeys/cjs@cynic.net-160819',
               '~/.ssh/cjs@cynic.net-120531',
         ]                               == cs[0].keyfiles
+    assert True                         == cs[0].confirm
 
     assert 'special'                    == cs[1].name
     assert ['/special/special.priv']    == cs[1].keyfiles
+    assert False                        == cs[1].confirm
 
     assert 'empty'                      == cs[2].name
     assert []                           == cs[2].keyfiles
+    assert True                         == cs[2].confirm
 
     assert 3                            == len(cs)
 

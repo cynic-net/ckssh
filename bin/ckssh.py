@@ -37,8 +37,9 @@ def runtimedir(env=os.environ):
 
 class Compartment(object):
     def __init__(self, name, keyfiles):
-        self.name = name
+        self.name     = name
         self.keyfiles = keyfiles
+        self.confirm  = True
 
 def parseconfig(stream):
     parser = re.compile(r'(?:\s*)(\w+)(?:\s*=\s*|\s+)(.+)')
@@ -60,6 +61,17 @@ def parseconfig(stream):
                 current.keyfiles.append(value)
             else:
                 raise RuntimeError('Got keyfile without compartment')
+        if key == 'ck_confirm':
+            if value == 'yes':
+                value = True
+            elif value == 'no':
+                value = False
+            else:
+                raise RuntimeError('Invalid CK_confirm value: {}'.format(value))
+            if current:
+                current.confirm = value
+            else:
+                raise RuntimeError('Got CK_confirm without compartment')
 
     return compartments
 
@@ -136,8 +148,11 @@ def ckset(args):
             exitcode = 0
             for keyfile in compartment.keyfiles:
                 (dir, file) = path.split(keyfile)
-                e = call(['ssh-add', '-t', '10h', file],
-                         cwd=path.expanduser(dir))
+                args = ['ssh-add', '-t', '10h']
+                if compartment.confirm:
+                    args += ['-c']
+                args += [file]
+                e = call(args, cwd=path.expanduser(dir))
                 if exitcode == 0: exitcode = e
 
     #   We need to check to see if the compartment is running and
