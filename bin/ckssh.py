@@ -157,10 +157,12 @@ def ckset(args):
     else:
         print(compartment.name)
         if args.a:
-            exitcode = addkeys(compartment)
+            e = addkeys(compartment)
+            if e != 0:
+                return e
 
-    #   We need to check to see if the compartment is running and
-    #   return 0 in that case.
+    #   Assuming no previous errors, we may have not yet queried the agent
+    #   so check to see if the compartment is running (0) or not (2).
     e = call(['ssh-add', '-l'], stdin=DEVNULL, stdout=DEVNULL, stderr=DEVNULL)
     if e == 2:
         return 2
