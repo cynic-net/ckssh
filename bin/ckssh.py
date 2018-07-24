@@ -128,6 +128,18 @@ def shell_interface_test(_):
     evalwrite('echo evaled;')
     evalwrite('export CKSSH_SHELL_INTERFACE_TEST=1;')
 
+def addkeys(compartment):
+    exitcode = 0
+    for keyfile in compartment.keyfiles:
+        (dir, file) = path.split(keyfile)
+        args = ['ssh-add', '-t', '10h']
+        if compartment.confirm:
+            args += ['-c']
+        args += [file]
+        e = call(args, cwd=path.expanduser(dir))
+        if exitcode == 0: exitcode = e
+    return exitcode
+
 def ckset(args):
     if args.params:
         print('Bad args: {}'.format(args.params), file=stderr)
@@ -145,15 +157,7 @@ def ckset(args):
     else:
         print(compartment.name)
         if args.a:
-            exitcode = 0
-            for keyfile in compartment.keyfiles:
-                (dir, file) = path.split(keyfile)
-                args = ['ssh-add', '-t', '10h']
-                if compartment.confirm:
-                    args += ['-c']
-                args += [file]
-                e = call(args, cwd=path.expanduser(dir))
-                if exitcode == 0: exitcode = e
+            exitcode = addkeys(compartment)
 
     #   We need to check to see if the compartment is running and
     #   return 0 in that case.
