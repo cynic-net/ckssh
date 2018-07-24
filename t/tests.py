@@ -85,6 +85,12 @@ def test_conf():
     c = cs('/ckssh/socket/empty')
     assert 'empty' == c.name
 
+def test_canexec(capfd):
+    assert canexec('which')
+    assert ('', '') == capfd.readouterr()
+    assert not canexec('a-program-which-certainly-does-not-exist')
+    assert ('', '') == capfd.readouterr()
+
 def test_evalwrite():
     ckssh.EVALFILE = StringIO()
     evalwrite('foo')

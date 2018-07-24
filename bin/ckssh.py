@@ -128,6 +128,12 @@ def shell_interface_test(_):
     evalwrite('echo evaled;')
     evalwrite('export CKSSH_SHELL_INTERFACE_TEST=1;')
 
+def canexec(command):
+    ' Return whether or not we can (probably) exec the given command. '
+    #   `shutil.which` is only in Python ≥ 3.3
+    #   This doesn't work on Windows, but perhaps `where` would do the trick?
+    return 0 == call(['which', command], stdout=DEVNULL)
+
 def addkeys(compartment):
     exitcode = 0
     for keyfile in compartment.keyfiles:
@@ -135,6 +141,9 @@ def addkeys(compartment):
         args = ['ssh-add', '-t', '10h']
         if compartment.confirm:
             args += ['-c']
+            if not canexec('ssh-askpass'):
+                print('WARNING: ssh-askpass not available but needed for'
+                    ' compartment {}'.format(compartment.name), file=stderr)
         args += [file]
         e = call(args, cwd=path.expanduser(dir))
         if exitcode == 0: exitcode = e
