@@ -3,8 +3,9 @@ from    pathlib import Path
 import  pytest
 
 import  ckssh
-from    ckssh import *
-
+from    ckssh import (
+        runtimedir, Compartment, parseconfig, canexec, evalwrite, CK,
+        )
 
 TESTDIR = Path(__file__).parent
 CONFIGFILE = Path(TESTDIR, 'mock_home/.ssh/ckssh_config')
@@ -109,17 +110,3 @@ def test_evalwrite():
     ckssh.EVALFILE = StringIO()
     evalwrite('foo')
     assert 'foo\n' == ckssh.EVALFILE.getvalue()
-
-def test_print_bash_init():
-    ckssh.EVALFILE = StringIO()
-    ckssh.print_bash_init(None, {})
-    assert 'ckset()' in ckssh.EVALFILE.getvalue()
-
-
-Args = ntup('TestArgs', 'params, a')
-Args.__new__.__defaults__ = ([], False)
-
-def test_ckset_show(capsys):
-    ckset(Args(), {})
-    cap = capsys.readouterr()
-    assert ('', 'No compartment.\n') == (cap.out, cap.err)

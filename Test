@@ -10,7 +10,7 @@ cd "$basedir"
 [[ $1 = -C ]] && { shift; git clean -fdX; }
 . ./activate -q
 
-PYTHONPATH=bin pytest -qq "$@" t/*.py
+PYTHONPATH=bin pytest -qq "$@" t/unit.py t/functional.py
 
 #   Simple form when you expect no messages to stdout
 eval $(bin/ckssh.py bash-init)
