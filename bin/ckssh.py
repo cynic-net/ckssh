@@ -17,7 +17,7 @@ DEVNULL         = open(os.devnull, 'w')
 ############################################################
 #   Compartment classes and functions
 
-def runtimedir(env=os.environ):
+def runtimedir(env):
     #   If envvar XDG_RUNTIME_DIR is set, we're set. However, in non-desktop
     #   environments (e.g., ssh login to a server) it's usually not set
     #   (and it's probably nonexistent on Windows, too). In that case
@@ -76,14 +76,16 @@ def parseconfig(stream):
     return compartments
 
 class CK:
-    #   Default socket path to use when not specified
-    SOCK = os.environ.get('SSH_AUTH_SOCK')
-
     class UnknownCompartment: pass
 
-    def __init__(self, configfile=None, compartment_path=runtimedir()):
+    def __init__(self, env, *, configfile=None, compartment_path=None):
+        self.env = env
         self.configfile = configfile or os.path.expanduser(CONFIG_FILE)
-        self.compartment_path = Path(compartment_path)
+        if compartment_path:
+            self.compartment_path = Path(compartment_path)
+        else:
+            self.compartment_path = Path(runtimedir(env))
+        self.default_sock = env.get('SSH_AUTH_SOCK')
         self.compartments = []
         with open(str(self.configfile)) as f:
             self.compartments = parseconfig(f)
@@ -91,7 +93,9 @@ class CK:
     def sockpath(self, name):
         return Path(self.compartment_path, 'socket', name)
 
-    def compartment_from_sock(self, ssh_auth_sock=SOCK):
+    def compartment_from_sock(self, ssh_auth_sock=None):
+        if not ssh_auth_sock:
+            ssh_auth_sock = self.default_sock
         if not ssh_auth_sock:
             return None
         for c in self.compartments:
@@ -108,7 +112,7 @@ def evalwrite(s):
     EVALFILE.write(s)
     EVALFILE.write('\n')
 
-def print_bash_init(_):
+def print_bash_init(_args, _env):
     me = str(Path(__file__).resolve())
     evalwrite('''
         ckcommand() {
@@ -122,7 +126,7 @@ def print_bash_init(_):
         ckset() { ckcommand ckset "$@"; }
     ''')
 
-def shell_interface_test(_):
+def shell_interface_test(_args, _env):
     print('stdout')
     print('stderr', file=stderr)
     evalwrite('echo evaled;')
@@ -149,15 +153,15 @@ def addkeys(compartment):
         if exitcode == 0: exitcode = e
     return exitcode
 
-def ckset(args):
+def ckset(args, env):
     if args.params:
         print('Bad args: {}'.format(args.params), file=stderr)
         return 2
 
-    ck = CK()
+    ck = CK(env)
     compartment = ck.compartment_from_sock()
     if compartment == None:
-        print('No compartment.', file=stderr)
+        print('No compartment.', file=sys.stderr)
         return 1
     elif compartment == CK.UnknownCompartment:
         print('Unknown compartment.', file=stderr)
@@ -209,6 +213,6 @@ def main():
 
     #   This is not really the right way to do subcommands; we should be using
     #   https://docs.python.org/3/library/argparse.html#sub-commands
-    sys.exit(subcommands[args.subcommand](args))
+    sys.exit(subcommands[args.subcommand](args, os.environ))
 
 if __name__ == '__main__': main()

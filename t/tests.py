@@ -14,9 +14,18 @@ def test_test_paths():
     assert CONFIGFILE.is_file()
 
 def test_runtimedir():
+    #   XDG_RUNTIME_DIR specified
     assert Path('/foo/ckssh') == runtimedir({'XDG_RUNTIME_DIR': '/foo'})
-    assert 'ckssh' == runtimedir({}).name
-    assert 'ckssh' == runtimedir().name     # Has a default env argument
+
+    #   Default runtime dir calculation
+    #   This probably doesn't work under Windows.
+    d = runtimedir({})
+    assert             d.parts[0]   # root directory
+    assert 'run'    == d.parts[1]
+    assert 'user'   == d.parts[2]
+    assert             d.parts[3]   # userid
+    assert 'ckssh'  == d.parts[4]
+    assert 5        == len(d.parts)
 
 def test_runtimedir_heuristic():
     ' See comments in the function re the heuristics we use. '
@@ -55,15 +64,20 @@ def test_parseconfig():
 
 def test_sockpath():
     assert Path('/foo/socket/bar') \
-        == CK(compartment_path='/foo/').sockpath('bar')
+        == CK({}, compartment_path='/foo/').sockpath('bar')
     assert Path('/foo/bar/socket/baz') \
-        == CK(compartment_path=Path('/foo/bar')).sockpath('baz')
+        == CK({}, compartment_path=Path('/foo/bar')).sockpath('baz')
 
-def test_conf_default_params():
-    assert CK().compartment_from_sock()
+def sockenv(path):
+    return { 'SSH_AUTH_SOCK': path }
 
-def test_conf():
-    ck = CK(configfile=CONFIGFILE, compartment_path='/ckssh/')
+def test_conf_no_config():
+    ck = CK({})
+    assert None                  is ck.compartment_from_sock()
+    assert CK.UnknownCompartment is ck.compartment_from_sock('/foo/bar')
+
+def test_conf_with_config():
+    ck = CK({}, configfile=CONFIGFILE, compartment_path='/ckssh/')
     unknown = CK.UnknownCompartment
     cs = ck.compartment_from_sock
 
@@ -98,7 +112,7 @@ def test_evalwrite():
 
 def test_print_bash_init():
     ckssh.EVALFILE = StringIO()
-    ckssh.print_bash_init(None)
+    ckssh.print_bash_init(None, {})
     assert 'ckset()' in ckssh.EVALFILE.getvalue()
 
 
@@ -106,7 +120,6 @@ Args = ntup('TestArgs', 'params, a')
 Args.__new__.__defaults__ = ([], False)
 
 def test_ckset_show(capsys):
-    ckset(Args())
+    ckset(Args(), {})
     cap = capsys.readouterr()
-    assert 'cynic\n' == cap.out
-    assert '' == cap.err
+    assert ('', 'No compartment.\n') == (cap.out, cap.err)
