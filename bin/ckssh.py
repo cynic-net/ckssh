@@ -79,6 +79,8 @@ class CK:
 
     def __init__(self, env, *, configfile=None, compartment_path=None):
         self.env = env
+        #   This hack is needed to make expanduser() use our env
+        os.environ['HOME'] = env.get('HOME', os.environ.get('HOME'))
         self.configfile = configfile or os.path.expanduser(CONFIG_FILE)
         if compartment_path:
             self.compartment_path = Path(compartment_path)
