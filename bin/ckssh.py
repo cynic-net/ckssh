@@ -5,7 +5,6 @@ from collections    import namedtuple as ntup
 from os             import path
 from pathlib        import Path
 from subprocess     import call
-from sys            import stdout, stderr
 import os, re, sys
 
 ############################################################
@@ -106,7 +105,7 @@ class CK:
 ############################################################
 #   Program operation classes and functions
 
-EVALFILE = stdout
+EVALFILE = sys.stdout
 
 def evalwrite(s):
     EVALFILE.write(s)
@@ -126,9 +125,12 @@ def print_bash_init(_args, _env):
         ckset() { ckcommand ckset "$@"; }
     ''')
 
+def printerr(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
 def shell_interface_test(_args, _env):
     print('stdout')
-    print('stderr', file=stderr)
+    printerr('stderr')
     evalwrite('echo evaled;')
     evalwrite('export CKSSH_SHELL_INTERFACE_TEST=1;')
 
@@ -146,8 +148,8 @@ def addkeys(compartment):
         if compartment.confirm:
             args += ['-c']
             if not canexec('ssh-askpass'):
-                print('WARNING: ssh-askpass not available but needed for'
-                    ' compartment {}'.format(compartment.name), file=stderr)
+                printerr('WARNING: ssh-askpass not available but needed for'
+                    ' compartment {}'.format(compartment.name))
         args += [file]
         e = call(args, cwd=path.expanduser(dir))
         if exitcode == 0: exitcode = e
@@ -155,16 +157,16 @@ def addkeys(compartment):
 
 def ckset(args, env):
     if args.params:
-        print('Bad args: {}'.format(args.params), file=stderr)
+        printerr('Bad args: {}'.format(args.params))
         return 2
 
     ck = CK(env)
     compartment = ck.compartment_from_sock()
     if compartment == None:
-        print('No compartment.', file=sys.stderr)
+        printerr('No compartment.')
         return 1
     elif compartment == CK.UnknownCompartment:
-        print('Unknown compartment.', file=stderr)
+        printerr('Unknown compartment.')
         if args.a:
             return 1    # We don't know a list of keys for this compartment.
     else:
