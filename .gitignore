@@ -3,3 +3,4 @@ __pycache__/
 /tmp/
 /.build/
 /.pytest_cache/
+/.tox/
