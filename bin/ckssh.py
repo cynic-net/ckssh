@@ -128,7 +128,7 @@ def print_bash_init(_args, _env):
     ''')
 
 def printerr(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
+    print('ckssh:', *args, file=sys.stderr, **kwargs)
 
 def shell_interface_test(_args, _env):
     print('stdout')

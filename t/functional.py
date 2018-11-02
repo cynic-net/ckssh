@@ -14,7 +14,7 @@ def test_print_bash_init():
 def test_ckset_show_no_compartment(capsys):
     ckssh.ckset(Args(), {})
     cap = capsys.readouterr()
-    assert ('', 'No compartment.\n') == (cap.out, cap.err)
+    assert ('', 'ckssh: No compartment.\n') == (cap.out, cap.err)
 
 TESTDIR = Path(__file__).parent
 TESTHOME = str(Path(TESTDIR, 'mock_home'))
@@ -23,7 +23,7 @@ def test_ckset_show_unknown_compartment(capsys):
     ENV = dict(SSH_AUTH_SOCK='/not/known')
     ckssh.ckset(Args(), ENV)
     cap = capsys.readouterr()
-    assert ('', 'Unknown compartment.\n') == (cap.out, cap.err)
+    assert ('', 'ckssh: Unknown compartment.\n') == (cap.out, cap.err)
 
 def test_ckset_show_compartment_name(capsys):
     ENV = dict(HOME=TESTHOME,
