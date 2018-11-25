@@ -10,7 +10,7 @@ from    io import StringIO
 from    pathlib import Path
 import  ckssh
 
-def main(subcommand, *, sockpath=None):
+def main(subcommand, *, args=None, sockpath=None):
     ''' Run something similar to ckssh.main() in the test framework.
         Note that this runs in the existing process.
         EVALFILE is set to a fresh StringIO() so its output can be asserted.
@@ -22,9 +22,10 @@ def main(subcommand, *, sockpath=None):
         HOME=TESTHOME,
         XDG_RUNTIME_DIR='/test-xdg-rtdir-nonexistent',
         )
-    if sockpath: ENV['SSH_AUTH_SOCK'] = sockpath
+    if not args:    args = []
+    if sockpath:    ENV['SSH_AUTH_SOCK'] = sockpath
     p, subcommands = ckssh.argparser()
-    args = p.parse_args([subcommand])
+    args = p.parse_args([subcommand] + args)
     return subcommands[args.subcommand](args, ENV)
 
 def test_print_bash_init():
@@ -45,3 +46,8 @@ def test_ckset_show_compartment_name(capsys):
     main('ckset', sockpath='/test-xdg-rtdir-nonexistent/ckssh/socket/empty')
     cap = capsys.readouterr()
     assert ('empty\n', '') == (cap.out, cap.err)
+
+def test_ckset_set_compartment_name_badargs(capsys):
+    main('ckset', args=['alice', 'bob'])
+    cap = capsys.readouterr()
+    assert ('', "ckssh: Bad args: ['alice', 'bob']\n") == (cap.out, cap.err)
