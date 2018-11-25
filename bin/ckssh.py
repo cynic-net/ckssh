@@ -189,9 +189,7 @@ def ckset(args, env):
 ############################################################
 #   Main
 
-def main():
-    global CONFIG_FILE, EVALFILE
-
+def argparser():
     subcommands = {
         'bash-init':            print_bash_init,
         'shell-interface-test': shell_interface_test,
@@ -210,6 +208,11 @@ def main():
             ' (automatic when changing compartments)')
     arg('subcommand', help=' '.join(sorted(subcommands.keys())))
     arg('params', nargs='*')
+    return p, subcommands
+
+def main():
+    global CONFIG_FILE, EVALFILE
+    p, subcommands = argparser()
     args = p.parse_args()
 
     CONFIG_FILE = args.config_file
