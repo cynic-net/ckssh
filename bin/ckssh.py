@@ -158,9 +158,14 @@ def addkeys(compartment):
     return exitcode
 
 def ckset(args, env):
+    setcompartment = None
     if args.params:
-        printerr('Bad args: {}'.format(args.params))
-        return 2
+        setcompartment = args.params[0]
+        if len(args.params) > 1:
+            printerr('ckset takes only one arg: {}'.format(args.params))
+            return 2
+
+    if setcompartment
 
     ck = CK(env)
     compartment = ck.compartment_from_sock()
