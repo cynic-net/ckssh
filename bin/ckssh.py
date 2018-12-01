@@ -206,6 +206,7 @@ def argparser():
     arg('-s', '--start', action='store_true',
         help='If necessary, start agent for compartment'
             ' (automatic when changing compartments)')
+    arg('--version', action='store_true', help='print version')
     arg('subcommand', help=' '.join(sorted(subcommands.keys())))
     arg('params', nargs='*')
     return p, subcommands
@@ -214,6 +215,10 @@ def main():
     global CONFIG_FILE, EVALFILE
     p, subcommands = argparser()
     args = p.parse_args()
+
+    if args.version:
+        print('version 0')
+        sys.exit(0)
 
     CONFIG_FILE = args.config_file
     if args.eval_file:  EVALFILE = open(args.eval_file, 'wt')

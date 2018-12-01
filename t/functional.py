@@ -8,6 +8,7 @@
 '''
 from    io import StringIO
 from    pathlib import Path
+import  pytest
 import  ckssh
 
 def main(subcommand, *, args=None, sockpath=None):
@@ -27,6 +28,20 @@ def main(subcommand, *, args=None, sockpath=None):
     p, subcommands = ckssh.argparser()
     args = p.parse_args([subcommand] + args)
     return subcommands[args.subcommand](args, ENV)
+
+#   This test doesn't work because --version is handled in
+#   ckssh.main(), shortcutting any handling of subcommands. It's not
+#   clear if we really care so much about testing this since it's
+#   mainly for the convenience of developers (to let them ensure they
+#   are using the dev version rather than their standard version) so
+#   we leave this here but disabled in case we think of an easy way to
+#   test this.
+@pytest.mark.skip
+@pytest.mark.parametrize('subcommand', ['bash-init', 'ckset'])
+def test_version(subcommand, capsys):
+    main(subcommand, args=['--version'])
+    assert ('version 0', '') == capsys.readouterr()
+    assert '' == ckssh.EVALFILE.getvalue()
 
 def test_print_bash_init():
     main('bash-init')
