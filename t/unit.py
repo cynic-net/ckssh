@@ -78,27 +78,21 @@ def test_conf_no_config():
     assert CK.UnknownCompartment is ck.compartment_from_sock('/foo/bar')
 
 def test_conf_with_config():
+    ''' This tests the functions that lookup a compartment by asserting
+        a compartment with the right name is returned. The full parsing
+        of compartment values is tested in test_parseconfig() above.
+    '''
     ck = CK({}, configfile=CONFIGFILE, compartment_path='/ckssh/')
     unknown = CK.UnknownCompartment
     cs = ck.compartment_from_sock
 
-    assert None     == cs(None)
-    assert unknown  == cs('/ckssh/socket/NOT_A_COMP')
-    assert unknown  == cs('/NOTCK/socket/special')
+    assert None             == cs(None)
+    assert unknown          == cs('/ckssh/socket/NOT_A_COMP')
+    assert unknown          == cs('/NOTCK/socket/special')
 
-    c = cs('/ckssh/socket/special')
-    assert 'special' == c.name
-    assert ['/special/special.priv'] == c.keyfiles
-
-    c = cs('/ckssh/socket/cjs@cynic.net')
-    assert 'cjs@cynic.net' == c.name
-    assert [
-        '/home/cjs/privkeys/cjs@cynic.net-160819',
-        '~/.ssh/cjs@cynic.net-120531',
-    ] == c.keyfiles
-
-    c = cs('/ckssh/socket/empty')
-    assert 'empty' == c.name
+    assert 'special'        == cs('/ckssh/socket/special').name
+    assert 'cjs@cynic.net'  == cs('/ckssh/socket/cjs@cynic.net').name
+    assert 'empty'          == cs('/ckssh/socket/empty').name
 
 def test_canexec(capfd):
     assert canexec('which')

@@ -41,6 +41,9 @@ class Compartment(object):
         self.confirm  = True
 
 def parseconfig(stream):
+    ''' Parse a ckssh configuration file, returning a list of
+        `Compartment` objects.
+    '''
     parser = re.compile(r'(?:\s*)(\w+)(?:\s*=\s*|\s+)(.+)')
     compartments = []
     current = None
@@ -75,6 +78,12 @@ def parseconfig(stream):
     return compartments
 
 class CK:
+    ''' A ckssh configuration.
+
+        This handles finding the config file, calling `parseconfig()`
+        to load and parse it, and searching the resulting list of
+        compartments.
+    '''
     class UnknownCompartment: pass
 
     def __init__(self, env, *, configfile=None, compartment_path=None):
