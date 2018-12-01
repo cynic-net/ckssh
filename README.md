@@ -5,20 +5,21 @@ Forwarding of authentication agent connections over ssh is very
 convenient, but also dangerous when forwarding to hosts where others
 do or may have root access. Anybody who can gain access to the Unix
 domain socket on which the local sshd is listening can send
-authentication requsts to your agent and thus effectively has use of
+authentication requests to your agent and thus effectively has use of
 all the keys in your agent.
 
-One way of mitigating this problem is to ask the agent to confirm all
-requests for signatures from particular keys (e.g., by using the `-c`
-option on `ssh-add(1)`). However this is not only inconvenient, but
-not all agents support this.
+Asking the agent to confirm all requests for signatures (e.g., with
+the `-c` option to `ssh-add`), if the agent supports this feature, can
+help prevent unauthorized use of keys. But even so this is both
+inconvenient and prone to error.
 
-Ckssh helps mitigate the problem by allowing you to easily use
+Ckssh helps mitigate the problem by allowing you easily to use
 separate keys stored in separate agents for connections to different
 hosts. A typical use case would be to set up a separate key and agent
-for work so that a compromised work server (or malicious admin) would
-gain access only to hosts accessible via that key, and not personal
-hosts or those belonging to other companies.
+for a company so that if one of their servers is compromised (or has a
+malicious actor) the only key that's compromised is the one you use
+for that company, keeping keys for other companies and personal keys
+safe.
 
 
 Usage
