@@ -103,6 +103,12 @@ class CK:
     def sockpath(self, name):
         return Path(self.compartment_path, 'socket', name)
 
+    def compartment_named(self, name):
+        for c in self.compartments:
+            if c.name == name:
+                return c
+        return self.UnknownCompartment
+
     def compartment_from_sock(self, ssh_auth_sock=None):
         if not ssh_auth_sock:
             ssh_auth_sock = self.default_sock

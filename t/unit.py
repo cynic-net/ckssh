@@ -84,14 +84,19 @@ def test_conf_with_config():
     '''
     ck = CK({}, configfile=CONFIGFILE, compartment_path='/ckssh/')
     unknown = CK.UnknownCompartment
+    cn = ck.compartment_named
     cs = ck.compartment_from_sock
 
     assert None             == cs(None)
+    assert unknown          == cn('NOT_A_COMP')
     assert unknown          == cs('/ckssh/socket/NOT_A_COMP')
     assert unknown          == cs('/NOTCK/socket/special')
 
+    assert 'special'        == cn('special').name
     assert 'special'        == cs('/ckssh/socket/special').name
+    assert 'cjs@cynic.net'  == cn('cjs@cynic.net').name
     assert 'cjs@cynic.net'  == cs('/ckssh/socket/cjs@cynic.net').name
+    assert 'empty'          == cn('empty').name
     assert 'empty'          == cs('/ckssh/socket/empty').name
 
 def test_canexec(capfd):
