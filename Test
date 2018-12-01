@@ -31,7 +31,7 @@ actual=$(
     HOME="$basedir/t/mock_home"
     XDG_RUNTIME_DIR=/test-xdg-rtdir-nonexistent
     SSH_AUTH_SOCK=/test-xdg-rtdir-nonexistent/ckssh/socket/$_compartment
-    ckset) || exitcode=$?
+    ckset -n) || exitcode=$?
 [[ $actual = $_compartment ]] || fail \
     "ckset: expected $_compartment, actual '$actual'"
 [[ $exitcode -eq 2 ]] || fail "ckset: expected \$?=2, actual \$?=$exitcode"

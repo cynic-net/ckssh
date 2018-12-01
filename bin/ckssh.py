@@ -169,11 +169,11 @@ def ckset(args, env):
         return 1
     elif compartment == CK.UnknownCompartment:
         printerr('Unknown compartment.')
-        if args.a:
+        if not args.no_load:
             return 1    # We don't know a list of keys for this compartment.
     else:
         print(compartment.name)
-        if args.a:
+        if not args.no_load:
             e = addkeys(compartment)
             if e != 0:
                 return e
@@ -197,12 +197,12 @@ def argparser():
     }
     p = ArgumentParser(description='Comparmentalized Key Agents for SSH')
     arg = p.add_argument
-    arg('-a', action='store_true',
-        help='Add all configured but unloaded keys to the compartment.')
     arg('-c', '--config-file', default=CONFIG_FILE,
         help='config file to use, default {}'.format(CONFIG_FILE))
     arg('--eval-file',
         help='file to which to write commands for parent shell')
+    arg('-n', '--no-load', action='store_true',
+        help='Do not add configured but unloaded keys to the compartment.')
     arg('-s', '--start', action='store_true',
         help='If necessary, start agent for compartment'
             ' (automatic when changing compartments)')
