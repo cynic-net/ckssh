@@ -7,12 +7,11 @@ Notes for a Rewrite
 This is the underlying program called by `ckset` that does all the
 heavy lifting.
 
-I'm not sure if we need to have separate `-agent` and `-add` programs,
-as OpenSSH does, or if we can just have one program that does all the
-work.
-
-This is probably most easily written in Python using the [Paramiko]
-library.
+It's written in Python, and it may or may not want to use the
+[Paramiko] library for some SSH agent operations. (Currently the
+operations, such as getting a list of loaded keys from an agent, look
+simple enough that either calling `ssh-add` or just writing the
+minimal code to query the agent directly will be enough.)
 
 
 `ckssh` Usage
