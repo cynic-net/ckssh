@@ -6,7 +6,7 @@ from collections    import namedtuple as ntup
 from os             import path
 from pathlib        import Path
 from subprocess     import call
-import os, re, sys
+import os, re, socket, sys
 
 ############################################################
 #   Defaults
@@ -23,7 +23,8 @@ class SSHAgentProtoError(RuntimeError):
 def read_agentproto_int(stream, length):
     bs = stream.read(length)
     if len(bs) != length:
-        raise SSHAgentProtoError('Short int: {}'.format(bs))
+        raise SSHAgentProtoError(
+            'Short int (expected {}): {}'.format(length, bs))
     return int.from_bytes(bs, byteorder='big')
 
 def read_agentproto_bstr(stream):
@@ -62,6 +63,20 @@ def read_agentproto_idcomments(stream):
 
     raise SSHAgentProtoError()
     return []
+
+def fetch_keynames():
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        sock.connect(os.environ.get('SSH_AUTH_SOCK'))
+    except (ConnectionRefusedError, FileNotFoundError):
+        return None
+    sock.sendall(b'\x00\x00\x00\x01'    # message length = 1
+                 b'\x0b')               # SSH2_AGENTC_REQUEST_IDENTITIES
+    #   !!! This shuts down both sides of the connection!
+    #sock.shutdown(socket.SHUT_WR)
+    comments = read_agentproto_idcomments(sock.makefile('rb'))
+    sock.close()
+    return comments
 
 ############################################################
 #   Compartment classes and functions
@@ -237,7 +252,20 @@ def ckset(args, env):
         if not args.no_load:
             return 1    # We don't know a list of keys for this compartment.
     else:
-        print(compartment.name)
+        if not args.verbose:
+            print(compartment.name)
+        else:
+            keynames = fetch_keynames()
+            if keynames is None:
+                print(compartment.name + ': stopped')
+            else:
+                print(compartment.name + ': running')
+                for keyfile in compartment.keyfiles:
+                    (_, kn) = path.split(keyfile)
+                    if kn in keynames:
+                        print(' ', kn + ':', 'loaded')
+                    else:
+                        print(' ', kn + ':', 'absent')
         if not args.no_load:
             e = addkeys(compartment)
             if e != 0:
@@ -249,7 +277,6 @@ def ckset(args, env):
     if e == 2:
         return 2
     return 0
-
 
 ############################################################
 #   Main
@@ -271,6 +298,8 @@ def argparser():
     arg('-s', '--start', action='store_true',
         help='If necessary, start agent for compartment'
             ' (automatic when changing compartments)')
+    arg('-v', '--verbose', action='store_true',
+        help="print compartment's status and loaded keys")
     arg('--version', action='store_true', help='print version')
     arg('subcommand', help=' '.join(sorted(subcommands.keys())))
     arg('params', nargs='*')
