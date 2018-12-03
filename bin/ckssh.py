@@ -222,10 +222,12 @@ def canexec(command):
     #   This doesn't work on Windows, but perhaps `where` would do the trick?
     return 0 == call(['which', command], stdout=DEVNULL)
 
-def addkeys(compartment):
+def addkeys(compartment, loaded_keynames):
     exitcode = 0
     for keyfile in compartment.keyfiles:
         (dir, file) = path.split(keyfile)
+        if file in loaded_keynames:
+            continue
         args = ['ssh-add', '-t', '10h']
         if compartment.confirm:
             args += ['-c']
@@ -252,10 +254,10 @@ def ckset(args, env):
         if not args.no_load:
             return 1    # We don't know a list of keys for this compartment.
     else:
+        keynames = fetch_keynames()
         if not args.verbose:
             print(compartment.name)
         else:
-            keynames = fetch_keynames()
             if keynames is None:
                 print(compartment.name + ': stopped')
             else:
@@ -267,7 +269,7 @@ def ckset(args, env):
                     else:
                         print(' ', kn + ':', 'absent')
         if not args.no_load:
-            e = addkeys(compartment)
+            e = addkeys(compartment, keynames)
             if e != 0:
                 return e
 
