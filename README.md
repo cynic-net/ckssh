@@ -75,8 +75,8 @@ that point you might not yet have a way to prompt for the passphrase(s).
       already running. If an agent cannot be started ckset will exit
       with code `2`.
 
-  Adding `-v` will print all the compartment's configured keyfiles,
-  noting which ones are present and absent in the agent.
+  Adding `-v`/`--verbose` will print all the compartment's configured
+  keyfiles, noting which ones are present and absent in the agent.
 
 * `ckset [-f] [-n] COMPARTMENT-NAME`
 
@@ -101,8 +101,9 @@ that point you might not yet have a way to prompt for the passphrase(s).
 * `ckset -l [-v]`
 
   List all compartments (configured with `CK_Compartment` directives)
-  and their code (running or not). With `-v`, also show the keyfiles
-  configured for each compartment and whether or not they are loaded.
+  and their code (running or not). With `-v`/`--verbose`, also show
+  the keyfiles configured for each compartment and whether or not they
+  are loaded.
 
 * `ckset -d [COMPARTMENT-NAME]`  
   `ckset -D`
