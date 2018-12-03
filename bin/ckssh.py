@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from argparse       import ArgumentParser
+from binascii       import hexlify
 from collections    import namedtuple as ntup
 from os             import path
 from pathlib        import Path
@@ -12,6 +13,55 @@ import os, re, sys
 
 CONFIG_FILE     = '~/.ssh/ckssh_config'
 DEVNULL         = open(os.devnull, 'w')
+
+############################################################
+#   SSH agent protocol functions
+
+class SSHAgentProtoError(RuntimeError):
+    pass
+
+def read_agentproto_int(stream, length):
+    bs = stream.read(length)
+    if len(bs) != length:
+        raise SSHAgentProtoError('Short int: {}'.format(bs))
+    return int.from_bytes(bs, byteorder='big')
+
+def read_agentproto_bstr(stream):
+    length = read_agentproto_int(stream, 4)
+    bs = stream.read(length)
+    if len(bs) != length:
+        raise SSHAgentProtoError('Short string: {}'.format(bs))
+    return bs
+
+def read_agentproto_idcomments(stream):
+    ''' From the given I/O stream, Read and parse an
+        ``SSH2_AGENT_IDENTITIES_ANSWER`` response to an
+        ``SSH2_AGENTC_REQUEST_IDENTITIES`` request.
+        Return a list with the comment for each identity.
+
+        For protocol details see section 2.5.2 of
+        <http://api.libssh.org/rfc/PROTOCOL.agent>.
+    '''
+    #   We don't actually use the message length, instead relying on
+    #   the count of keys and string lengths, but we parse it to make
+    #   sure this isn't a bad message.
+    msglen = read_agentproto_int(stream, 4)
+
+    msgtype = read_agentproto_int(stream, 1)
+    if msgtype != 0xC:
+        raise SSHAgentProtoError(
+            'Unknown message type: {}'.format(msgtype))
+
+    keycount = read_agentproto_int(stream, 4)
+    comments = []
+    for i in range(0, keycount):
+        read_agentproto_bstr(stream)             # key blob
+        bs = read_agentproto_bstr(stream)        # key comment
+        comments.append(bs.decode('ascii'))
+    return comments
+
+    raise SSHAgentProtoError()
+    return []
 
 ############################################################
 #   Compartment classes and functions

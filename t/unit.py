@@ -1,11 +1,58 @@
-from    io import StringIO
+from    io import BytesIO, StringIO
+from    binascii import unhexlify
 from    pathlib import Path
 import  pytest
 
 import  ckssh
 from    ckssh import (
+        SSHAgentProtoError, read_agentproto_idcomments,
         runtimedir, Compartment, parseconfig, canexec, evalwrite, CK,
         )
+
+####################################################################
+#   SSH agent protocol
+
+def test_ssh2_ids_answer_decode_0():
+    answer0 = (
+        0, 0, 0, 5,     # message length
+        0xC,            # SSH2_AGENT_IDENTITIES_ANSWER
+        0, 0, 0, 0,     # identities count: 0
+    )
+    assert [] == read_agentproto_idcomments(BytesIO(bytes(answer0)))
+
+def test_ssh2_ids_answer_decode_2():
+    answer2 = (
+        b''
+        b'\0\0\0\5'     # message length
+        b'\x0C'         # SSH2_AGENT_IDENTITIES_ANSWER
+        b'\0\0\0\2'     # identities count: 2
+
+        b'\0\0\0\1'     # 1st answer blob length: 1
+        b'\x7E'
+        b'\0\0\0\3'     # 1st answer comment length: 3
+        b'foo'
+
+        b'\0\0\0\0'     # 2nd answer blob length: 0
+        b''
+        b'\0\0\0\7'     # 2nd answer comment length: 7
+        b'bar baz'
+    )
+    assert ['foo', 'bar baz'] \
+        == read_agentproto_idcomments(BytesIO(bytes(answer2)))
+
+@pytest.mark.parametrize('badmsg', (
+    '',
+    '00000001',     # no response type
+    '0000000102',   # bad response type
+    '000000020C',   # bad length
+    ))
+def test_ssh2_ids_answer_decode_err(badmsg):
+    bs = unhexlify(badmsg)  # Convert printable test param to bytes
+    with pytest.raises(SSHAgentProtoError):
+        read_agentproto_idcomments(BytesIO(bs))
+
+####################################################################
+#   ckssh stuff
 
 TESTDIR = Path(__file__).parent
 CONFIGFILE = Path(TESTDIR, 'mock_home/.ssh/ckssh_config')
