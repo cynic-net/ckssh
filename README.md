@@ -5,88 +5,129 @@ Forwarding of authentication agent connections over ssh is very
 convenient, but also dangerous when forwarding to hosts where others
 do or may have root access. Anybody who can gain access to the Unix
 domain socket on which the local sshd is listening can send
-authentication requsts to your agent and thus effectively has use of
+authentication requests to your agent and thus effectively has use of
 all the keys in your agent.
 
-One way of mitigating this problem is to ask the agent to confirm all
-requests for signatures from particular keys (e.g., by using the `-c`
-option on `ssh-add(1)`). However this is not only inconvenient, but
-not all agents support this.
+Asking the agent to confirm all requests for signatures (e.g., with
+the `-c` option to `ssh-add`), if the agent supports this feature, can
+help prevent unauthorized use of keys. But even so this is both
+inconvenient and prone to error.
 
-Ckssh helps mitigate the problem by allowing you to easily use
+Ckssh helps mitigate the problem by allowing you easily to use
 separate keys stored in separate agents for connections to different
 hosts. A typical use case would be to set up a separate key and agent
-for work so that a compromised work server (or malicious admin) would
-gain access only to hosts accessible via that key, and not personal
-hosts or those belonging to other companies.
+for a company so that if one of their servers is compromised (or has a
+malicious actor) the only key that's compromised is the one you use
+for that company, keeping keys for other companies and personal keys
+safe.
 
 
-Configuration File
-------------------
+Usage
+-----
 
-The configuration file is found in `$HOME/.ssh/ckssh_config`. It is
-parsed in the same way as `ssh_config`:
+If this is your first time using this, see the [SETUP](SETUP.md) file
+to set up your initial configuration.
 
-* Initial whitespace on a line is ignored.
-* Empty lines are ignored.
-* Lines starting with `#` are comments, and ignored. A `#` preceeded
-  by anything other than whitespace is not a comment.
-* Configuration directives are of the form `<key><whitespace><value>`.
+`ckset` without an argument prints the current container name and
+ensures that it is started and has all keys loaded. `ckset` with a
+container name argument switches to that container and does the same.
+The `-n`/`--no-load` option will disable loading of keys (though not
+affect any keys that are already loaded) and the `-f`/`--force` option
+will take a container name to be valid even if it's not named in the
+configuration file.
 
-### Configuration Parsing Bugs
+In your desktop environment startup script you will probably want just
+to set the container without adding keys (`-n`/`--no-load`) since at
+that point you might not yet have a way to prompt for the passphrase(s).
 
-The current parsing code is not completely compatible with `ssh_config`.
+### Command Details
 
-* We do not accept a list of patterns on the `CK_Host` line, just a
-  single name that is matched exactly.
-* We take parameters only from the first matched `CK_Host` section,
-  and ignore all sections after that.
+* `ckset [-f] [-n] [-v]`
 
-### Configuration Directives
+  Show the current compartment, starting an agent if necessary and
+  optionally adding configured keys that are not already added to the
+  agent.
 
-The `CK_Compartment` and `CK_Host` directives start separate
-sections of the configuration file; after one of these, subsequent
-configuration directives are read as part of that section up until
-the next `CK_Compartment` or `CK_Host` directive.
+  If `SSH_AUTH_SOCK` is unset, `No compartment.` is printed to stderr
+  and the exit code is 1.
 
-#### Compartment Configuration
+  If `SSH_AUTH_SOCK` is set to a known compartment (i.e., one named in
+  the configuration file):
+  - The compartment name will be printed to stdout.
+  - An agent will be started for the compartment if one is not already
+    running. If an agent cannot be started ckset will exit with code `2`.
+  - Unless `-n` or `--no-load` is given, any configured keys that are
+    not currently loaded will be loaded. All unloaded keys will always
+    be attempted; if any attempt fails the exit code will be `3`, even
+    if other attempts are successful.
 
-`CK_Compartment` defines a compartment (ssh-agent process) to
-hold keys.
+  If `SSH_AUTH_SOCK` is set to a compartment not named in the
+  configuration file:
+  - The compartment name will always be printed to stdout.
+  - When an agent is not running for the compartment and neither the
+    `-f` nor the `--force` flag is given, a message will be printed to
+    stderr and the exit code will be `1`.
+  - If an agent is running for the compartment or the `-f` or
+    `--force` flag is given, the unconfigured compartment name will
+    not be treated as an error:
+    - No warning will be printed.
+    - An agent will be started for that compartment if one isn't
+      already running. If an agent cannot be started ckset will exit
+      with code `2`.
 
-The ssh-agent socket will be named `$XDG_RUNTIME_DIR/ckssh/socket/$name`
-where `$name` is the parameter provided to `CK_Compartment`.
-`$XDG_RUNTIME_DIR` is expected to be set up as per the [FreeDesktop.org
-basedir spec][basedir]; the program currently fails if it's not set as
-it's unable to properly set up a runtime dir itself.
+  Adding `-v`/`--verbose` will print all the compartment's configured
+  keyfiles, noting which ones are present and absent in the agent.
 
-A `CK_Compartment` section may contain one or more `CK_Keyfile`
-directives, each of which specifies the full path to an SSH private
-key file to be loaded in to the agent with `ssh-add`. Shell variables
-and tildes in the path are interpolated by the shell.
+* `ckset [-f] [-n] COMPARTMENT-NAME`
 
-Any other configuration directives are treated as configuration
-options to be passed on to `ssh`. These are passed on after (and so
-will be overridden by) directives in the `CK_Host` section.
+  Switch to the given compartment. Command-line completion should be
+  provide for the compartment name.
 
-[basedir]: https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
+  If the compartment is not named in the config file and no agent is
+  running for it ckset will exit with code `1`. The `-f` or `--force`
+  option will override the behaviour, treating the compartment as
+  known (though obviously without any keyfiles configured).
 
-#### Host Configuration
+  If no agent is running for the compartment one will be started.
+  ckset will exit with code `2` if an agent can't be started.
 
-The `CK_Host` directive is similar to ssh_config's `Host` directive,
-and starts a host configuration section.
+  If `-n` or `--no-load` is given, the command is guaranteed never to
+  be interactive and is suitable for use in startup scripts that do
+  not have a tty such as `.xsession`. Otherwise an attempt will be
+  made to load all configured keyfiles that are not already loaded.
+  All unloaded keyfiles will be attempted; if any attempt fails the
+  exit code will be `3`.
 
-A `CK_CompartmentName` directive specifies the compartment to be used;
-it must be one defined by a `CK_Compartment` directive.
+* `ckset -l [-v]`
 
-Any other configuration directives are treated as configuration
-options to be passed on to SSH.
+  List all compartments (configured with `CK_Compartment` directives)
+  and their code (running or not). With `-v`/`--verbose`, also show
+  the keyfiles configured for each compartment and whether or not they
+  are loaded.
 
+* `ckset -d [COMPARTMENT-NAME]`  
+  `ckset -D`
+
+  `-d` removes the keys from the named compartment or the current
+  compartment if no name is given. `-D` deletes the keys from all
+  running compartments (even those not named in the config file).
+
+### Exit Codes
+
+The following exit codes are common to all commands.
+
+- 0: The command was entirely successful.
+- 1: The requested compartment does not exist (i.e., it's not named in
+     the configuration file) and the `-f`/`--force` option was not
+     supplied.
+- 2: The compartment could not be started (`ssh-agent` failed to start).
+- 3: The compartment was started, but at least one configured key
+     could not be added.
 
 Copyright and License
 ---------------------
 
-Ckssh is copyright 2016 by Curt J. Sampson <cjs@cynic.net>
+ckssh is copyright 2016, 2018 by Curt J. Sampson <cjs@cynic.net>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
