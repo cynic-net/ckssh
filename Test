@@ -5,4 +5,4 @@ basedir=$(cd $(dirname "$0") && pwd -P)
 
 cd "$basedir"
 . activate -q
-pytest -q "$@"
+pytest -q "$@" t/unit.py
