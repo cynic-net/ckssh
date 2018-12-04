@@ -4,5 +4,5 @@ set -e -o pipefail
 basedir=$(cd $(dirname "$0") && pwd -P)
 
 cd "$basedir"
-. activate -q
+. activate -q --python=python2
 pytest -q "$@" t/unit.py
