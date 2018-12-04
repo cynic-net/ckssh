@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e -o pipefail
+trap 'echo FAILED!; exit 1' 0
 
 warn_python_version() {
     #   If Python version doesn't have prefix $1, print a warning to stdout.
@@ -9,8 +10,11 @@ warn_python_version() {
 }
 
 basedir=$(cd $(dirname "$0") && pwd -P)
-
 cd "$basedir"
 . activate -q --python=python2
 warn_python_version 2.7
 pytest -q "$@" t/unit.py
+bin/ckssh.py | diff t/expected -
+
+trap '' 0
+echo OK
