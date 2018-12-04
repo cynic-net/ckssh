@@ -223,6 +223,8 @@ def canexec(command):
     return 0 == call(['which', command], stdout=DEVNULL)
 
 def addkeys(compartment, loaded_keynames):
+    if loaded_keynames is None:
+        return 2
     exitcode = 0
     for keyfile in compartment.keyfiles:
         (dir, file) = path.split(keyfile)
