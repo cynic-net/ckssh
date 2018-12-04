@@ -237,8 +237,12 @@ def addkeys(compartment, loaded_keynames):
                 printerr('WARNING: ssh-askpass not available but needed for'
                     ' compartment {}'.format(compartment.name))
         args += [file]
-        e = call(args, cwd=path.expanduser(dir))
-        if exitcode == 0: exitcode = e
+        if os.access(path.expanduser(keyfile), os.R_OK):
+            e = call(args, cwd=path.expanduser(dir))
+            if exitcode == 0: exitcode = e
+        else:
+            printerr('Cannot read keyfile: {}'.format(keyfile))
+            if exitcode == 0: exitcode = 2
     return exitcode
 
 def ckset(args, env):
