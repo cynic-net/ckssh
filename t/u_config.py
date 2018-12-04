@@ -1,4 +1,4 @@
-' Unit Tests '
+' Unit Tests: Configuration loading/parsing '
 
 from    io import StringIO
 from    os.path import dirname, join as opj
