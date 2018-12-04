@@ -3,7 +3,7 @@
 from    __future__ import print_function
 import  os, re
 
-def ssh_bool(s):
+def ssh_bool(s, lineno):
     ''' Parse an ssh_config-style boolean value.
 
         This isn't really defined anywhere, as far as I can tell
@@ -16,7 +16,8 @@ def ssh_bool(s):
     if s is False:                      return False
     if s.lower() in ('yes', 'true'):    return True
     if s.lower() in ('no', 'false'):    return False
-    raise Config.ConfigError('Invalid boolean value: {}'.format(s))
+    raise Config.ConfigError(
+        'Invalid boolean value on line {}: {}'.format(lineno, s))
 
 class Compartment():
     ' The configuration for a single compartment. '
@@ -33,12 +34,11 @@ class Compartment():
         return self._confirm
 
     def set_confirm(self, value):
-        ''' Set confirm value if not already set.
-            This accepts bool or an ssh_config-syntax string value.
-        '''
-        b = ssh_bool(value)
+        ' Set confirm value if not already set. '
+        if value not in (False, True):
+            raise RuntimeError('bad confirm value: {}'.format(repr(value)))
         if self._confirm is None:
-            self._confirm = b
+            self._confirm = value
 
 class Config():
     ' The compartments and other configuration read from the config file. '
@@ -52,7 +52,9 @@ class Config():
         conf = Config()
         compartments = conf.compartments
         curname = None
+        lineno = 0
         for line in input:
+            lineno += 1
             match = parser.match(line)
             if not match: continue
             key = match.group(1).lower(); value = match.group(2)
@@ -64,7 +66,7 @@ class Config():
                 compartments[curname].keyfiles.append(value)
                 continue
             if key == 'ck_confirm':
-                compartments[curname].set_confirm(value)
+                compartments[curname].set_confirm(ssh_bool(value, lineno))
                 continue
             if key == 'ck_host' or key == 'ck_compartmentname':
                 #   Currently unimplemented.
@@ -72,7 +74,8 @@ class Config():
                 continue
             if key.startswith('ck_'):
                 raise Config.ConfigError(
-                    'Unknown config parameter: {}'.format(key))
+                    'Unknown config parameter on line {}: {}' \
+                    .format(lineno, key))
             # All non-CK parameters are ignored.
         return conf
 

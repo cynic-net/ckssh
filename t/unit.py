@@ -10,11 +10,12 @@ CONFIGFILE = opj(TESTDIR, 'mock_home/.ssh/ckssh_config')
 
 def test_ssh_bool():
     for t in ['yes', 'true', 'trUE', True]:
-        assert True is ssh_bool(t)
+        assert True is ssh_bool(t, 0)
     for f in ['no', 'false', False]:
-        assert False is ssh_bool(f)
-    with pytest.raises(Config.ConfigError):
-        ssh_bool('0')
+        assert False is ssh_bool(f, 0)
+    with pytest.raises(Config.ConfigError) as e:
+        ssh_bool('0', 27)
+    assert e.match(r'^Invalid boolean value on line 27: 0$')
 
 def test_compartment():
     comp = Compartment('t')
@@ -22,14 +23,14 @@ def test_compartment():
     assert []  == comp.keyfiles
     assert True is comp.confirm()
 
-    comp.set_confirm('no');
+    comp.set_confirm(False);
     assert False is comp.confirm()
 
     comp.set_confirm(True)
     assert False is comp.confirm()  # First setting takes precedence
 
     with pytest.raises(RuntimeError):
-        comp.set_confirm('unknown')
+        comp.set_confirm(2)
 
 def test_Config_load_empty():
     conf  = Config.load(StringIO())
@@ -64,6 +65,12 @@ def test_Config_load():
     assert 2                    == len(bob.keyfiles)
     assert False                is bob.confirm()
 
+@pytest.mark.xfail(strict=True, desc='We need to write error handling.')
+def test_Config_load_keywithoutvalue():
+    with pytest.raises(Config.ConfigError) as e:
+        Config.load(StringIO(u'CK_this_is_wrong'))
+    assert e.match(r'^Unknown config parameter on line 1: ck_this_is_wrong$')
+
 def test_Config_load_unknown_ckparam():
     input = u'''
         # Blank lines to check that line number of error is correct
@@ -71,13 +78,7 @@ def test_Config_load_unknown_ckparam():
         '''
     with pytest.raises(Config.ConfigError) as e:
         Config.load(StringIO(input))
-    assert e.match('Unknown config parameter')
-
-@pytest.mark.xfail(strict=True, desc='We need to write error handling.')
-def test_Config_load_keywithoutvalue():
-    with pytest.raises(Config.ConfigError) as e:
-        Config.load(StringIO(u'CK_this_is_wrong'))
-    assert e.match(r'^Unknown config parameter on line 1: ck_this_is_wrong$')
+    assert e.match('Unknown config parameter on line 3')
 
 @pytest.mark.xfail(strict=True, desc='We need to write error handling.')
 def test_Config_load_errors():
