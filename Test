@@ -13,8 +13,8 @@ basedir=$(cd $(dirname "$0") && pwd -P)
 cd "$basedir"
 . activate -q --python=python2
 warn_python_version 2.7
-pytest -q "$@" t/unit.py
-bin/ckssh.py | diff t/expected -
+PYTHONPATH="$basedir/bin" pytest -q "$@" t/unit.py
+HOME="$basedir/t/mock_home" bin/ckssh.py | diff t/expected -
 
 trap '' 0
 echo OK
