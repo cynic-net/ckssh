@@ -1,7 +1,81 @@
 #!/usr/bin/env python
 
 from    __future__ import print_function
-import  os, re
+import  errno, os, re, socket
+
+####################################################################
+#   SSH agent protocol
+
+class SSHAgentProtoError(RuntimeError):
+    pass
+
+def read_agentproto_int(stream, length):
+    bs = stream.read(length)
+    if len(bs) != length:
+        raise SSHAgentProtoError(
+            'Short int (expected {}): {}'.format(length, bs))
+    #   No `int.from_bytes()` in Python 2. :-(
+    result = 0L
+    for c in bs:
+        result <<= 8
+        result += ord(c)
+    return result
+
+def read_agentproto_bstr(stream):
+    length = read_agentproto_int(stream, 4)
+    bs = stream.read(length)
+    if len(bs) != length:
+        raise SSHAgentProtoError('Short string: {}'.format(bs))
+    return bs
+
+def read_agentproto_idcomments(stream):
+    ''' From the given I/O stream, Read and parse an
+        ``SSH2_AGENT_IDENTITIES_ANSWER`` response to an
+        ``SSH2_AGENTC_REQUEST_IDENTITIES`` request.
+        Return a list with the comment for each identity.
+
+        For protocol details see section 2.5.2 of
+        <http://api.libssh.org/rfc/PROTOCOL.agent>.
+    '''
+    #   We don't actually use the message length, instead relying on
+    #   the count of keys and string lengths, but we parse it to make
+    #   sure this isn't a bad message.
+    msglen = read_agentproto_int(stream, 4)
+
+    msgtype = read_agentproto_int(stream, 1)
+    if msgtype != 0xC:
+        raise SSHAgentProtoError(
+            'Unknown message type: {}'.format(msgtype))
+
+    keycount = read_agentproto_int(stream, 4)
+    comments = []
+    for i in range(0, keycount):
+        read_agentproto_bstr(stream)             # key blob
+        bs = read_agentproto_bstr(stream)        # key comment
+        comments.append(bs.decode('ascii'))
+    return comments
+
+def fetch_keynames(env=os.environ):
+    sockname = env.get('SSH_AUTH_SOCK')
+    if not sockname:
+        return None
+    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    try:
+        sock.connect(env.get('SSH_AUTH_SOCK'))
+    except socket.error as ex:
+        if ex.errno in (errno.ENOENT, errno.ECONNREFUSED):
+            return None
+        raise ex
+    sock.sendall(b'\x00\x00\x00\x01'    # message length = 1
+                 b'\x0b')               # SSH2_AGENTC_REQUEST_IDENTITIES
+    #   !!! This shuts down both sides of the connection!
+    #sock.shutdown(socket.SHUT_WR)
+    comments = read_agentproto_idcomments(sock.makefile('rb'))
+    sock.close()
+    return comments
+
+####################################################################
+#   Configuration
 
 def ssh_bool(s, lineno):
     ''' Parse an ssh_config-style boolean value.
