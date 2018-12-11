@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 set -e -o pipefail
 
+warn_python_version() {
+    #   If Python version doesn't have prefix $1, print a warning to stdout.
+    local ver=$(python --version 2>&1)  # 2.x prints ver to stderr
+    ver=${ver##Python }
+    [[ $ver =~ $1* ]] || echo "WARNING: Python version $ver doesn't match $1*"
+}
+
 basedir=$(cd $(dirname "$0") && pwd -P)
 
 cd "$basedir"
 . activate -q --python=python2
+warn_python_version 2.7
 pytest -q "$@" t/unit.py
