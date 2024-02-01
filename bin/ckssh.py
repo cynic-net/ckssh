@@ -2,6 +2,9 @@
 
 from    __future__ import print_function
 import  errno, os, re, socket
+import  sys
+
+py_major = sys.version_info[0]
 
 ####################################################################
 #   SSH agent protocol
@@ -15,10 +18,17 @@ def read_agentproto_int(stream, length):
         raise SSHAgentProtoError(
             'Short int (expected {}): {}'.format(length, bs))
     #   No `int.from_bytes()` in Python 2. :-(
-    result = 0L
+    if py_major == 2:
+        result = long(0)
+    else:
+        result = 0
     for c in bs:
+        if not isinstance(c, int):
+            #   Python 3 already returns int,
+            #   but Python 2 return str of length 1.
+            c = ord(c)
         result <<= 8
-        result += ord(c)
+        result += c
     return result
 
 def read_agentproto_bstr(stream):
