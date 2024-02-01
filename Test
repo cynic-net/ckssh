@@ -11,7 +11,7 @@ warn_python_version() {
 
 basedir=$(cd $(dirname "$0") && pwd -P)
 cd "$basedir"
-. activate -q --python=python2
+. ./pactivate -q
 warn_python_version 2.7
 PYTHONPATH="$basedir/bin" pytest -q "$@" t/u_*.py
 HOME="$basedir/t/mock_home" bin/ckssh.py | diff t/expected -
