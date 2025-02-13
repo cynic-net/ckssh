@@ -5,7 +5,7 @@ from binascii       import hexlify
 from collections    import namedtuple as ntup
 from os             import path
 from pathlib        import Path
-from subprocess     import call
+from subprocess     import call, DEVNULL
 import os, re, socket, sys
 
 ############################################################
@@ -64,10 +64,16 @@ def read_agentproto_idcomments(stream):
     raise SSHAgentProtoError()
     return []
 
-def fetch_keynames():
+def fetch_keynames(sockpath):
+    ''' Connects to the given ssh-agent socket and returns a (possibly
+        empty) list of the comments for the keys the agent is holding.
+        Returns `None` if no agent is listening on that path.
+    '''
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    if sockpath is None:
+        sockpath = os.environ.get('SSH_AUTH_SOCK')
     try:
-        sock.connect(os.environ.get('SSH_AUTH_SOCK'))
+        sock.connect(bytes(sockpath))
     except (ConnectionRefusedError, FileNotFoundError):
         return None
     sock.sendall(b'\x00\x00\x00\x01'    # message length = 1
@@ -165,8 +171,15 @@ class CK:
         with open(str(self.configfile)) as f:
             self.compartments = parseconfig(f)
 
-    def sockpath(self, name):
-        return Path(self.compartment_path, 'socket', name)
+    def sockpath(self, name=None):
+        ''' Return the path to the socket for compartment `name`, if not
+            `None`, otherwise the path to the default socket (the
+            ``SSH_AUTH_SOCK`` environment variable).
+        '''
+        if name is None:
+            return Path(self.default_sock)
+        else:
+            return Path(self.compartment_path, 'socket', name)
 
     def compartment_named(self, name):
         for c in self.compartments:
@@ -222,6 +235,15 @@ def canexec(command):
     #   This doesn't work on Windows, but perhaps `where` would do the trick?
     return 0 == call(['which', command], stdout=DEVNULL)
 
+def startagent(sockpath):
+    if not canexec('ssh-agent'):
+        printerr("'Cannot execute 'ssh-agent'")
+        exit(1)
+    e = call(['ssh-agent', '-a', sockpath], stdout=DEVNULL)
+    if e != 0:
+        printerr('Unable to start ssh-agent on', sockpath)
+        exit(e)
+
 def addkeys(compartment, loaded_keynames):
     if loaded_keynames is None:
         return 2
@@ -246,12 +268,17 @@ def addkeys(compartment, loaded_keynames):
     return exitcode
 
 def ckset(args, env):
-    if args.params:
-        printerr('Bad args: {}'.format(args.params))
+    if len(args.params) > 1:
+        printerr('Too many args: {}'.format(args.params))
         return 2
+    elif len(args.params) == 1:
+        namearg = args.params[0]
+    else:
+        namearg = None
 
     ck = CK(env)
-    compartment = ck.compartment_from_sock()
+    if namearg is None: compartment = ck.compartment_from_sock()
+    else:               compartment = ck.compartment_named(namearg)
     if compartment == None:
         printerr('No compartment.')
         return 1
@@ -259,25 +286,43 @@ def ckset(args, env):
         printerr('Unknown compartment.')
         if not args.no_load:
             return 1    # We don't know a list of keys for this compartment.
+
+    sockpath = ck.sockpath(namearg)
+    keynames = fetch_keynames(sockpath)
+    if keynames is None and (args.start or namearg is None):
+        #   Start compartment. Not sure if we really want this print.
+        printerr('Starting ssh-agent '
+            f'for compartment {compartment.name} on {sockpath}')
+        startagent(sockpath)
+        keynames = fetch_keynames(sockpath)
+
+    if namearg is not None:
+        #   Given an arg, we change the compartment. We must change both
+        #   the default socket for this process and SSH_AUTH_SOCK in the
+        #   parent environment. We unset SSH_AGENT_PID because that's
+        #   easier, though probably we should get the agent's PID and set
+        #   it properly so that `ssh-agent -k` can be used.
+        os.environ['SSH_AUTH_SOCK'] = str(sockpath)
+        evalwrite('unset SSH_AGENT_PID=')
+        evalwrite(f'export SSH_AUTH_SOCK={sockpath}')
+
+    if not args.verbose:
+        print(compartment.name)
     else:
-        keynames = fetch_keynames()
-        if not args.verbose:
-            print(compartment.name)
+        if keynames is None:
+            print(compartment.name + ': stopped')
         else:
-            if keynames is None:
-                print(compartment.name + ': stopped')
-            else:
-                print(compartment.name + ': running')
-                for keyfile in compartment.keyfiles:
-                    (_, kn) = path.split(keyfile)
-                    if kn in keynames:
-                        print(' ', kn + ':', 'loaded')
-                    else:
-                        print(' ', kn + ':', 'absent')
-        if not args.no_load:
-            e = addkeys(compartment, keynames)
-            if e != 0:
-                return e
+            print(compartment.name + ': running')
+            for keyfile in compartment.keyfiles:
+                (_, kn) = path.split(keyfile)
+                if kn in keynames:
+                    print(' ', kn + ':', 'loaded')
+                else:
+                    print(' ', kn + ':', 'absent')
+    if not args.no_load:
+        e = addkeys(compartment, keynames)
+        if e != 0:
+            return e
 
     #   Assuming no previous errors, we may have not yet queried the agent
     #   so check to see if the compartment is running (0) or not (2).
@@ -305,7 +350,7 @@ def argparser():
         help='Do not add configured but unloaded keys to the compartment.')
     arg('-s', '--start', action='store_true',
         help='If necessary, start agent for compartment'
-            ' (automatic when changing compartments)')
+            ' (automatic when compartment name given')
     arg('-v', '--verbose', action='store_true',
         help="print compartment's status and loaded keys")
     arg('--version', action='store_true', help='print version')
