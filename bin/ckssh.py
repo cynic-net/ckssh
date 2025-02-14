@@ -213,7 +213,7 @@ def print_bash_init(_args, _env):
             local retval=0;
             local evalfile=$(mktemp -t ckssh-eval-XXXXX);
             ''' + me + ''' --eval-file "$evalfile" "$@"; retval=$?;
-            eval $(cat "$evalfile");
+            source "$evalfile";
             rm -f "$evalfile";
             return $retval;
         };
