@@ -21,6 +21,23 @@ malicious actor) the only key that's compromised is the one you use
 for that company, keeping keys for other companies and personal keys
 safe.
 
+#### SSH Agent Restriction
+
+Another method of doing this, as of OpenSSH 8.9, is to use [SSH agent
+restriction], which differs in that:
+- It offers more fine-grained access when forwarding, including the ability
+  to drop ability to use keys depending on the hops through which the agent
+  is forwarded.
+- It doesn't allow use of separate keys in local partitions (such as Docker
+  containers).
+- Its configuration can be more complex and harder to analyse.
+- It must be configured on a host-by-host basis; `ckssh` works for all
+  hosts you log into when forwarding that agent (including via multiple
+  hops). This can be an advantage or disadvantage, depending.
+- It requires both that all hops understand the new protocol.
+
+[SSH agent restriction]: https://www.openssh.com/agent-restrict.html
+
 
 Usage
 -----
