@@ -8,7 +8,7 @@ fail() { echo 1>&2 'FAILURE:' "$@"; exit 1; }
 basedir=$(cd "$(dirname "$0")" && pwd -P)
 cd "$basedir"
 [[ $1 = -C ]] && { shift; git clean -fdX; }
-. ./activate -q
+. ./pactivate -q
 
 PYTHONPATH=bin pytest -qq "$@" t/unit.py t/functional.py
 
