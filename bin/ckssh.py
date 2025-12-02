@@ -288,6 +288,7 @@ def ckset(args, env):
             return 1    # We don't know a list of keys for this compartment.
 
     sockpath = ck.sockpath(namearg)
+    sockpath.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     keynames = fetch_keynames(sockpath)
     if keynames is None and (args.start or namearg is None):
         #   Start compartment. Not sure if we really want this print.

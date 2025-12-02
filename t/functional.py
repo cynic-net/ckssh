@@ -7,9 +7,22 @@
     true functional tests in the top-level ``Test`` script.
 '''
 from    io import StringIO
+from    os import environ
 from    pathlib import Path
 import  pytest
 import  ckssh
+
+def all_of(*ps):
+    ''' `all()` but with each proposition as a separate parameter. When
+        showing failures this lets pytest deconstruct each proposition
+        individually, whereas elements of the sequence provided to `all()`
+        will not be deconstructed.
+    '''
+    return all(ps)
+
+####################################################################
+
+XDG_RUNTIME_DIR = environ['XDG_RUNTIME_DIR']
 
 def main(subcommand, *, args=None, sockpath=None):
     ''' Run something similar to ckssh.main() in the test framework.
@@ -21,7 +34,7 @@ def main(subcommand, *, args=None, sockpath=None):
     TESTHOME = str(Path(TESTDIR, 'mock_home'))
     ENV = dict(
         HOME=TESTHOME,
-        XDG_RUNTIME_DIR='/test-xdg-rtdir-nonexistent',
+        XDG_RUNTIME_DIR=XDG_RUNTIME_DIR,
         )
     if not args:    args = []
     if sockpath:    ENV['SSH_AUTH_SOCK'] = sockpath
@@ -58,9 +71,22 @@ def test_ckset_show_unknown_compartment(capsys):
     assert ('', 'ckssh: Unknown compartment.\n') == (cap.out, cap.err)
 
 def test_ckset_show_compartment_name(capsys):
-    main('ckset', sockpath='/test-xdg-rtdir-nonexistent/ckssh/socket/empty')
+    main('ckset', sockpath=XDG_RUNTIME_DIR + '/ckssh/socket/empty')
     cap = capsys.readouterr()
-    assert ('empty\n', '') == (cap.out, cap.err)
+    print(f'cap.out: {cap.out!r}')
+    print(f'cap.err: {cap.err!r}')
+    def id(x): return x
+    assert all_of('empty\n' == cap.out,
+        cap.err.startswith(
+            'ckssh: Starting ssh-agent for compartment empty on '),
+        cap.err.endswith('/ckssh/socket/empty\n'),
+    )
+
+#   assert all((
+#       'empty' == cap.out,
+#       cap.err.startswith('Starting ssh-agent for compartment empty on '),
+#       cap.err.endswith('/ckssh/socket/empty'),
+#   ))
 
 def test_ckset_set_compartment_name_badargs(capsys):
     main('ckset', args=['alice', 'bob'])

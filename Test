@@ -5,20 +5,26 @@ trap 'ec=$?; echo 1>&2 "INTERNAL ERROR: ec=$ec line=$LINENO cmd=$BASH_COMMAND";
 
 fail() { ec=$?; echo "FAILED ($ec)" "$@"; exit $ec; }
 
-basedir=$(cd "$(dirname "$0")" && pwd -P)
-cd "$basedir"
+export PROJDIR=$(cd "$(dirname "$0")" && pwd -P)
+#   We must never use the user's actual $XDG_RUNTIME_DIR when testing
+#   so as not to stomp on their current compartments.
+export XDG_RUNTIME_DIR=$PROJDIR/.build/run
+rm -rf "$XDG_RUNTIME_DIR" \
+    && mkdir -p "$XDG_RUNTIME_DIR" && chmod 0700 "$XDG_RUNTIME_DIR"
+
+cd "$PROJDIR"
+
 [[ ${1:-} = -[cC] ]] && { shift; git clean -fdX; }
 . ./pactivate -q
 
 PYTHONPATH=bin pytest -qq "$@" t/unit.py t/functional.py || fail pytest
 
 #   Simple form when you expect no messages to stdout
-eval $(bin/ckssh.py bash-init)
-
 CKSSH_SHELL_INTERFACE_TEST=''
 #   `ckcommand` will separate out the stuff to eval and eval it,
 #   leaving stdout and stderr working as normal.
-ckcommand shell-interface-test >/dev/null 2>&1
+ckcommand shell-interface-test >/dev/null 2>&1 \
+    || fail ckcommand shell-interface-test
 [[ -n $CKSSH_SHELL_INTERFACE_TEST ]] \
     || fail 'CKSSH_SHELL_INTERFACE_TEST not set'
 
@@ -28,8 +34,7 @@ ckcommand shell-interface-test >/dev/null 2>&1
 _compartment=cjs@cynic.net
 exitcode=0
 actual=$(
-    HOME="$basedir/t/mock_home"
-    XDG_RUNTIME_DIR=/test-xdg-rtdir-nonexistent
+    HOME="$PROJDIR/t/mock_home"
     SSH_AUTH_SOCK=/test-xdg-rtdir-nonexistent/ckssh/socket/$_compartment
     ckset -n) || exitcode=$?
 [[ $actual = $_compartment ]] || fail \
