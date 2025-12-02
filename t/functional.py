@@ -65,4 +65,5 @@ def test_ckset_show_compartment_name(capsys):
 def test_ckset_set_compartment_name_badargs(capsys):
     main('ckset', args=['alice', 'bob'])
     cap = capsys.readouterr()
-    assert ('', "ckssh: Bad args: ['alice', 'bob']\n") == (cap.out, cap.err)
+    assert ('',      "ckssh: Too many args: ['alice', 'bob']\n") \
+        == (cap.out, cap.err)
