@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-set -e -o pipefail
+set -Eeuo pipefail
+trap 'ec=$?; echo 1>&2 "INTERNAL ERROR: ec=$ec line=$LINENO cmd=$BASH_COMMAND";
+      exit $ec;' ERR
 
-trap 'echo FAILED!; exit 1' 0
-
-fail() { echo 1>&2 'FAILURE:' "$@"; exit 1; }
+fail() { ec=$?; echo "FAILED ($ec)" "$@"; exit $ec; }
 
 basedir=$(cd "$(dirname "$0")" && pwd -P)
 cd "$basedir"
-[[ $1 = -C ]] && { shift; git clean -fdX; }
+[[ ${1:-} = -[cC] ]] && { shift; git clean -fdX; }
 . ./pactivate -q
 
-PYTHONPATH=bin pytest -qq "$@" t/unit.py t/functional.py
+PYTHONPATH=bin pytest -qq "$@" t/unit.py t/functional.py || fail pytest
 
 #   Simple form when you expect no messages to stdout
 eval $(bin/ckssh.py bash-init)
@@ -36,5 +36,4 @@ actual=$(
     "ckset: expected $_compartment, actual '$actual'"
 [[ $exitcode -eq 2 ]] || fail "ckset: expected \$?=2, actual \$?=$exitcode"
 
-trap '' 0
 echo OK
