@@ -1,6 +1,18 @@
 Notes for a Rewrite
 ===================
 
+To-do
+-----
+
+- Fix the README to match the actual usage right now; `ckset -l` doesn't
+  work, and it's not clear that we have a way to list all known
+  compartments (living or not) right now.
+- Improve docs with a summary of all directives allowed in `ckssh_config`.
+- It would be nice to set up agents specifically to bind-mount into
+  Docker/Podman containers, where you could only load a key from outside
+  the container. (This would prevent the usual NPM etc. attacks from
+  grabbing private key files and running password crackers against them.)
+
 
 Usage: `ckssh-agent`/`ckssh-add`/`ckssh-???`
 --------------------------------------------
