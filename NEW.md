@@ -1,8 +1,9 @@
 Notes for a Rewrite
 ===================
 
-`ckssh-agent`/`ckssh-add`/`ckssh-???` Usage
--------------------------------------------
+
+Usage: `ckssh-agent`/`ckssh-add`/`ckssh-???`
+--------------------------------------------
 
 This is the underlying program called by `ckset` that does all the
 heavy lifting.
@@ -14,7 +15,7 @@ simple enough that either calling `ssh-add` or just writing the
 minimal code to query the agent directly will be enough.)
 
 
-`ckssh` Usage
+Usage: `ckssh`
 -------------
 
 For options, one idea is to have `ckssh` set up a new ssh_config file
@@ -25,8 +26,8 @@ the file). But I'm not sure how much (if any) advantage this offers
 over simply adding `-o` options to the `ssh` command that it runs.
 
 
-`ssh` Usage
------------
+Usage: `ssh`
+------------
 
 I'm worried about people typing `ssh` when they meant `ckssh` and
 forwarding from agents with keys that shouldn't be available on the
